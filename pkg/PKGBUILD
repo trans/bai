@@ -1,0 +1,42 @@
+# Maintainer: trans <transfire@gmail.com>
+pkgname=bai
+pkgver=0.2.0
+pkgrel=1
+pkgdesc="Translate natural-language shell requests into proposed commands"
+arch=('x86_64')
+url="https://github.com/trans/bai"
+license=('MIT')
+depends=(
+  'glibc'
+  'openssl'
+  'pcre2'
+  'gc'
+  'gcc-libs'
+  'zlib'
+  'brotli'
+  'zstd'
+)
+makedepends=(
+  'crystal'
+)
+optdepends=(
+  'wl-clipboard: copy generated commands to the Wayland clipboard'
+  'xclip: copy generated commands to the X11 clipboard'
+)
+install=bai.install
+source=("${pkgname}-${pkgver}.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+  cd "${pkgname}-${pkgver}"
+  mkdir -p bin
+  crystal build --release --no-debug src/main.cr -o bin/bai
+}
+
+package() {
+  cd "${pkgname}-${pkgver}"
+
+  install -Dm755 bin/bai "${pkgdir}/usr/bin/bai"
+  install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+  install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}

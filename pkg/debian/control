@@ -1,0 +1,16 @@
+Source: bai
+Section: utils
+Priority: optional
+Maintainer: trans <transfire@gmail.com>
+Build-Depends: debhelper-compat (= 13), crystal, build-essential, libssl-dev, libpcre2-dev, libgc-dev, zlib1g-dev, libbrotli-dev, libzstd-dev
+Standards-Version: 4.6.0
+Homepage: https://github.com/trans/bai
+
+Package: bai
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Suggests: xclip, wl-clipboard
+Description: Translate natural-language shell requests into proposed commands
+ bai is a small Crystal CLI that turns natural-language shell requests
+ into a proposed command string. It never executes the command itself;
+ it prints the result so the user stays in control of approval and execution.

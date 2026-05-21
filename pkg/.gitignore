@@ -1,0 +1,11 @@
+*.pkg.tar.zst
+*.pkg.tar.zst.sig
+*.tar.gz
+*.deb
+*.build
+*.buildinfo
+*.changes
+*.dsc
+build/
+pkg/
+src/

@@ -1,0 +1,13 @@
+post_install() {
+  echo ""
+  echo "==> bai requires ANTHROPIC_API_KEY in your environment."
+  echo "==> Optional clipboard helpers:"
+  echo "==>   wl-clipboard for Wayland"
+  echo "==>   xclip for X11"
+  echo "==> Prompt addendum defaults to ~/.config/bai/prompt.md"
+  echo ""
+}
+
+post_upgrade() {
+  post_install
+}

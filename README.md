@@ -153,6 +153,9 @@ you can verify it's loading.
 just build       # release binary at bin/bai
 just build-debug # debug build
 just docs-api    # generate HTML API docs at docs/api
+just pkg-src     # snapshot tracked files into pkg/bai-<version>.tar.gz
+just pkg-arch    # build an Arch package in pkg/
+just pkg-deb     # build Debian package artifacts in pkg/
 just run -- <query>
 just test
 just fmt

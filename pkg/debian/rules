@@ -1,0 +1,11 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	mkdir -p bin
+	crystal build --release --no-debug src/main.cr -o bin/bai
+
+override_dh_auto_test:
+	true

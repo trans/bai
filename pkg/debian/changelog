@@ -1,0 +1,9 @@
+bai (0.2.0-1) unstable; urgency=medium
+
+  * Add Arch Linux and Debian packaging layouts under pkg/.
+  * Add Justfile release helpers for source snapshots and package builds.
+  * Publish bai as version 0.2.0.
+  * Optional clipboard integration remains external: install `xclip`
+    or `wl-clipboard` if you want automatic copy-to-clipboard support.
+
+ -- trans <transfire@gmail.com>  Thu, 21 May 2026 00:00:00 +0000
