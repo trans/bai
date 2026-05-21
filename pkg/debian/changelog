@@ -1,9 +1,10 @@
-bai (0.3.1-1) unstable; urgency=medium
+bai (0.4.0-1) unstable; urgency=medium
 
-  * Allow most env-style settings to be read from files in the bai config
-    directory, with environment variables still taking precedence.
-  * Document the config-file mapping and prompt addendum behavior more clearly.
-  * Publish bai as version 0.3.1.
+  * Add shell override support via --shell, BAI_SHELL, and config files.
+  * Add --show-config to print the effective runtime configuration.
+  * Add --explain and --strict request modes.
+  * Add --json output mode for editor and wrapper integrations.
+  * Publish bai as version 0.4.0.
   * Optional clipboard integration remains external: install `xclip`
     or `wl-clipboard` if you want automatic copy-to-clipboard support.
 
