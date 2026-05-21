@@ -1,12 +1,12 @@
-name: sai
+name: bai
 version: 0.1.0
 
 authors:
   - Thomas Sawyer <transfire@gmail.com>
 
 targets:
-  sai:
-    main: src/sai.cr
+  bai:
+    main: src/main.cr
 
 crystal: '>= 1.20.1'
 

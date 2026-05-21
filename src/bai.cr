@@ -2,12 +2,12 @@ require "http/client"
 require "json"
 require "option_parser"
 
-module Sai
+module Bai
   VERSION = "0.1.0"
 
   API_URL    = "https://api.anthropic.com/v1/messages"
   API_VER    = "2023-06-01"
-  MODEL      = ENV["SAI_MODEL"]? || "claude-haiku-4-5-20251001"
+  MODEL      = ENV["BAI_MODEL"]? || "claude-haiku-4-5-20251001"
   MAX_TOKENS = 512
 
   SYSTEM = <<-PROMPT
@@ -23,7 +23,7 @@ module Sai
     copy_override : Bool? = nil
 
     parser = OptionParser.new do |p|
-      p.banner = "Usage: sai [options] [--] <natural language query>"
+      p.banner = "Usage: bai [options] [--] <natural language query>"
       p.on("-h", "--help", "Show help") { show_help = true }
       p.on("-v", "--version", "Show version") { puts VERSION; exit 0 }
       p.on("-n", "--dry-run", "Print what would be sent to the model and exit (no API call)") { dry_run = true }
@@ -37,16 +37,16 @@ module Sai
       puts
       puts "Env vars:"
       puts "  ANTHROPIC_API_KEY    Required."
-      puts "  SAI_MODEL            Override model (default: #{MODEL})."
-      puts "  SAI_CLIPBOARD        Set to 0/off/false/no to disable clipboard."
-      puts "  SAI_PROMPT_FILE      Override prompt addendum path (default: #{default_prompt_path || "~/.config/sai/prompt.md"})."
+      puts "  BAI_MODEL            Override model (default: #{MODEL})."
+      puts "  BAI_CLIPBOARD        Set to 0/off/false/no to disable clipboard."
+      puts "  BAI_PROMPT_FILE      Override prompt addendum path (default: #{default_prompt_path || "~/.config/bai/prompt.md"})."
       return 0
     end
 
     query = argv.join(" ").strip
     query = STDIN.gets_to_end.strip if query.empty? && !STDIN.tty?
     if query.empty?
-      STDERR.puts "sai: no query given"
+      STDERR.puts "bai: no query given"
       return 2
     end
 
@@ -57,7 +57,7 @@ module Sai
 
     api_key = ENV["ANTHROPIC_API_KEY"]?
     unless api_key
-      STDERR.puts "sai: ANTHROPIC_API_KEY not set"
+      STDERR.puts "bai: ANTHROPIC_API_KEY not set"
       return 1
     end
 
@@ -65,20 +65,20 @@ module Sai
 
     if clipboard_enabled?(copy_override)
       if copy_to_clipboard(cmd)
-        STDERR.puts "sai: copied to clipboard" if STDERR.tty?
+        STDERR.puts "bai: copied to clipboard" if STDERR.tty?
       end
     end
 
     print cmd
     0
   rescue ex
-    STDERR.puts "sai: #{ex.message}"
+    STDERR.puts "bai: #{ex.message}"
     1
   end
 
   private def self.clipboard_enabled?(override : Bool?) : Bool
     return override unless override.nil?
-    case ENV["SAI_CLIPBOARD"]?.try(&.downcase)
+    case ENV["BAI_CLIPBOARD"]?.try(&.downcase)
     when "0", "off", "false", "no" then false
     else                                true
     end
@@ -153,7 +153,7 @@ module Sai
   end
 
   private def self.load_addendum : String
-    path = ENV["SAI_PROMPT_FILE"]? || default_prompt_path
+    path = ENV["BAI_PROMPT_FILE"]? || default_prompt_path
     return "" unless path && File.exists?(path)
     File.read(path).strip
   rescue
@@ -164,7 +164,7 @@ module Sai
     home = ENV["HOME"]?
     return nil unless home
     base = ENV["XDG_CONFIG_HOME"]? || "#{home}/.config"
-    "#{base}/sai/prompt.md"
+    "#{base}/bai/prompt.md"
   end
 
   private def self.gather_context : String
@@ -239,5 +239,3 @@ module Sai
     s.strip
   end
 end
-
-exit Sai.run(ARGV)

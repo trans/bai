@@ -14,16 +14,16 @@ test:
     crystal spec
 
 run *args:
-    crystal run src/sai.cr -- {{args}}
+    crystal run src/main.cr -- {{args}}
 
 install: build
     install -d {{bindir}}
-    install -m 0755 bin/sai {{bindir}}/sai
-    @echo "installed: {{bindir}}/sai"
+    install -m 0755 bin/bai {{bindir}}/bai
+    @echo "installed: {{bindir}}/bai"
 
 uninstall:
-    rm -f {{bindir}}/sai
-    @echo "removed: {{bindir}}/sai"
+    rm -f {{bindir}}/bai
+    @echo "removed: {{bindir}}/bai"
 
 clean:
     rm -rf bin lib .crystal
