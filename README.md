@@ -62,8 +62,12 @@ content is ready to paste cleanly) and exits.
 
 | Variable             | Purpose                                                                |
 | -------------------- | ---------------------------------------------------------------------- |
-| `ANTHROPIC_API_KEY`  | Required.                                                              |
-| `BAI_MODEL`          | Override the default model (`claude-haiku-4-5-20251001`).              |
+| `BAI_PROVIDER`       | Select provider: `anthropic` or `openai` (default: `anthropic`).       |
+| `ANTHROPIC_API_KEY`  | Required when `BAI_PROVIDER=anthropic`.                                |
+| `OPENAI_API_KEY`     | Required when `BAI_PROVIDER=openai`.                                   |
+| `BAI_ANTHROPIC_MODEL`| Preferred Anthropic model override (`claude-haiku-4-5-20251001`).      |
+| `BAI_MODEL`          | Legacy alias for `BAI_ANTHROPIC_MODEL`.                                |
+| `BAI_OPENAI_MODEL`   | OpenAI model override (default: `gpt-5-mini`).                         |
 | `BAI_CLIPBOARD`      | Set to `0`/`off`/`false`/`no` to disable clipboard copy by default.    |
 | `BAI_PROMPT_FILE`    | Override the prompt addendum path (default: `~/.config/bai/prompt.md`).|
 

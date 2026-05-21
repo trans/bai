@@ -78,22 +78,45 @@ describe Bai do
     end
   end
 
+  it "returns 1 when the OpenAI API key is missing for the openai provider" do
+    BaiSpecSupport.with_env("BAI_PROVIDER", "openai") do
+      BaiSpecSupport.with_env("OPENAI_API_KEY", nil) do
+        stdout = IO::Memory.new
+        stderr = IO::Memory.new
+
+        Bai.run(["list", "files"], stdout: stdout, stderr: stderr).should eq(1)
+
+        stdout.to_s.should eq("")
+        stderr.to_s.should eq("bai: OPENAI_API_KEY not set\n")
+      end
+    end
+  end
+
+  it "returns 1 for an unsupported provider" do
+    BaiSpecSupport.with_env("BAI_PROVIDER", "bogus") do
+      stdout = IO::Memory.new
+      stderr = IO::Memory.new
+
+      Bai.run(["list", "files"], stdout: stdout, stderr: stderr).should eq(1)
+
+      stdout.to_s.should eq("")
+      stderr.to_s.should eq("bai: unsupported provider: bogus\n")
+    end
+  end
+
   it "uses argv text as the query when provided" do
     BaiSpecSupport.with_env("ANTHROPIC_API_KEY", "test-key") do
       stdout = IO::Memory.new
       stderr = IO::Memory.new
-      seen_api_key = ""
       seen_query = ""
 
-      requester = ->(api_key : String, query : String) do
-        seen_api_key = api_key
+      requester = ->(query : String) do
         seen_query = query
         "ls -lt"
       end
 
       Bai.run(["list", "files"], stdout: stdout, stderr: stderr, command_requester: requester).should eq(0)
 
-      seen_api_key.should eq("test-key")
       seen_query.should eq("list files")
       stdout.to_s.should eq("ls -lt")
       stderr.to_s.should eq("")
@@ -107,7 +130,7 @@ describe Bai do
       stderr = IO::Memory.new
       seen_query = ""
 
-      requester = ->(api_key : String, query : String) do
+      requester = ->(query : String) do
         seen_query = query
         "find . -type f"
       end
@@ -133,7 +156,7 @@ describe Bai do
       stderr = IO::Memory.new
       clipboard_called = false
 
-      requester = ->(api_key : String, query : String) { "echo test" }
+      requester = ->(query : String) { "echo test" }
       copier = ->(text : String) do
         clipboard_called = true
         true
@@ -198,6 +221,81 @@ describe Bai::AnthropicClient do
   it "raises a clear error when the response is invalid json" do
     expect_raises(Exception, "API response was not valid JSON") do
       Bai::AnthropicClient.extract_command("{not json")
+    end
+  end
+end
+
+describe Bai::OpenAIClient do
+  it "uses output_text when present" do
+    response = {
+      output_text: "ls -lt",
+      output: [] of String,
+    }.to_json
+
+    Bai::OpenAIClient.extract_command(response).should eq("ls -lt")
+  end
+
+  it "extracts the first usable output_text content block" do
+    response = {
+      output: [
+        {type: "reasoning", summary: [] of String},
+        {
+          type:    "message",
+          role:    "assistant",
+          content: [
+            {type: "refusal", refusal: "no"},
+            {type: "output_text", text: "find . -type f"},
+          ],
+        },
+      ],
+    }.to_json
+
+    Bai::OpenAIClient.extract_command(response).should eq("find . -type f")
+  end
+
+  it "sanitizes fenced output_text content" do
+    response = {
+      output: [
+        {
+          type:    "message",
+          role:    "assistant",
+          content: [
+            {type: "output_text", text: "```sh\nrg foo src\n```"},
+          ],
+        },
+      ],
+    }.to_json
+
+    Bai::OpenAIClient.extract_command(response).should eq("rg foo src")
+  end
+
+  it "raises a clear error when output is missing" do
+    expect_raises(Exception, "API response missing output array") do
+      Bai::OpenAIClient.extract_command({id: "resp_123"}.to_json)
+    end
+  end
+
+  it "raises a clear error when no usable output text is present" do
+    response = {
+      output: [
+        {
+          type:    "message",
+          role:    "assistant",
+          content: [
+            {type: "output_text", text: "   "},
+          ],
+        },
+      ],
+    }.to_json
+
+    expect_raises(Exception, "API response contained no usable output text") do
+      Bai::OpenAIClient.extract_command(response)
+    end
+  end
+
+  it "raises a clear error when the response is invalid json" do
+    expect_raises(Exception, "API response was not valid JSON") do
+      Bai::OpenAIClient.extract_command("{not json")
     end
   end
 end

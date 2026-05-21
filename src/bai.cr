@@ -4,6 +4,8 @@ require "option_parser"
 require "./bai/anthropic_client"
 require "./bai/clipboard"
 require "./bai/prompt"
+require "./bai/provider"
+require "./bai/openai_client"
 require "./bai/system_context"
 
 # `Bai` exposes the CLI entry logic for the executable and for tests.
@@ -16,7 +18,7 @@ module Bai
   # :nodoc:
   API_VER    = "2023-06-01"
   # :nodoc:
-  MODEL      = ENV["BAI_MODEL"]? || "claude-haiku-4-5-20251001"
+  MODEL      = ENV["BAI_ANTHROPIC_MODEL"]? || ENV["BAI_MODEL"]? || "claude-haiku-4-5-20251001"
   # :nodoc:
   MAX_TOKENS = 512
 
@@ -32,7 +34,7 @@ module Bai
     stdout : IO = STDOUT,
     stderr : IO = STDERR,
     stdin_tty : Bool = STDIN.tty?,
-    command_requester : Proc(String, String, String)? = nil,
+    command_requester : Proc(String, String)? = nil,
     clipboard_copier : Proc(String, Bool)? = nil
   ) : Int32
     show_help = false
@@ -72,16 +74,10 @@ module Bai
       return 0
     end
 
-    api_key = ENV["ANTHROPIC_API_KEY"]?
-    unless api_key
-      stderr.puts "bai: ANTHROPIC_API_KEY not set"
-      return 1
-    end
-
     cmd = if command_requester
-            command_requester.call(api_key, query)
+            command_requester.call(query)
           else
-            AnthropicClient.request_command(api_key, query)
+            Provider.request_command(query)
           end
 
     if Clipboard.enabled?(copy_override)
@@ -106,8 +102,12 @@ module Bai
     output.puts parser
     output.puts
     output.puts "Env vars:"
-    output.puts "  ANTHROPIC_API_KEY    Required."
-    output.puts "  BAI_MODEL            Override model (default: #{MODEL})."
+    output.puts "  BAI_PROVIDER         Command model backend: anthropic or openai (default: anthropic)."
+    output.puts "  ANTHROPIC_API_KEY    Required when BAI_PROVIDER=anthropic."
+    output.puts "  OPENAI_API_KEY       Required when BAI_PROVIDER=openai."
+    output.puts "  BAI_ANTHROPIC_MODEL  Override Anthropic model (preferred; legacy alias: BAI_MODEL)."
+    output.puts "  BAI_MODEL            Legacy alias for BAI_ANTHROPIC_MODEL."
+    output.puts "  BAI_OPENAI_MODEL     Override OpenAI model (default: #{OpenAIClient::MODEL})."
     output.puts "  BAI_CLIPBOARD        Set to 0/off/false/no to disable clipboard."
     output.puts "  BAI_PROMPT_FILE      Override prompt addendum path (default: #{Prompt.default_addendum_path || "~/.config/bai/prompt.md"})."
   end
