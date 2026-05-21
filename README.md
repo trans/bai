@@ -1,6 +1,7 @@
-# bai (a little AI BASH helper)
+# bai
 
-*(bai is the Chinese word for "clear" and "understanding")*
+*A small AI shell-command helper. The name comes from the Chinese `bai`,
+associated with clarity and understanding.*
 
 A tiny CLI that translates a natural-language request into a shell command.
 You stay the approval gate — `bai` only proposes; the shell runs.
@@ -16,6 +17,30 @@ so you can paste, edit, or run it however you like. Or wire up the
 your prompt buffer in place.
 
 ## Installation
+
+### Arch Linux
+
+Download the `.pkg.tar.zst` asset from the latest GitHub release, then install:
+
+```sh
+sudo pacman -U ./bai-*.pkg.tar.zst
+```
+
+### Debian / Ubuntu
+
+Download the `.deb` asset from the latest GitHub release, then install:
+
+```sh
+sudo dpkg -i ./bai_*.deb
+```
+
+If `dpkg` reports missing dependencies, finish with:
+
+```sh
+sudo apt-get install -f
+```
+
+### From source
 
 Requires [Crystal](https://crystal-lang.org/) and [just](https://just.systems/).
 
