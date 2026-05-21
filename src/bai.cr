@@ -11,7 +11,7 @@ require "./bai/system_context"
 # `Bai` exposes the CLI entry logic for the executable and for tests.
 module Bai
   # The current released version of the CLI.
-  VERSION = "0.2.0"
+  VERSION = "0.3.0"
 
   # :nodoc:
   API_URL    = "https://api.anthropic.com/v1/messages"
