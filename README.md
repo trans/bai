@@ -1,7 +1,9 @@
-# bai
+# bai (a little AI BASH helper)
 
 A tiny CLI that translates a natural-language request into a shell command.
 You stay the approval gate — `bai` only proposes; the shell runs.
+
+*(bai is the Chinese word for "clear" and "understanding")*
 
 ```
 $ bai list files in cwd sorted by date
