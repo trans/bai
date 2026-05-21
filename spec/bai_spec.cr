@@ -18,11 +18,26 @@ module BaiSpecSupport
       ENV[key] = original
     end
   end
+
+  def self.with_config(files : Hash(String, String))
+    path = "/tmp/bai-spec-config-#{Process.pid}-#{Random.rand(1_000_000)}"
+    Dir.mkdir_p(path)
+
+    files.each do |name, value|
+      File.write("#{path}/#{name}", value)
+    end
+
+    with_env("BAI_CONFIG_DIR", path) do
+      yield path
+    end
+  ensure
+    FileUtils.rm_r(path) if path && Dir.exists?(path)
+  end
 end
 
 describe Bai do
   it "exposes a version string" do
-    Bai::VERSION.should eq("0.3.0")
+    Bai::VERSION.should eq("0.3.1")
   end
 
   it "prints help to stdout" do
@@ -92,6 +107,50 @@ describe Bai do
     end
   end
 
+  it "reads the provider from a config file when the env var is unset" do
+    BaiSpecSupport.with_env("BAI_PROVIDER", nil) do
+      BaiSpecSupport.with_config({"provider" => "openai"}) do
+        Bai::Provider.current.should eq("openai")
+      end
+    end
+  end
+
+  it "lets env vars override config files" do
+    BaiSpecSupport.with_env("BAI_PROVIDER", "anthropic") do
+      BaiSpecSupport.with_config({"provider" => "openai"}) do
+        Bai::Provider.current.should eq("anthropic")
+      end
+    end
+  end
+
+  it "reads API keys from config files" do
+    BaiSpecSupport.with_env("ANTHROPIC_API_KEY", nil) do
+      BaiSpecSupport.with_config({"anthropic_api_key" => "file-key"}) do
+        Bai::Config.value("ANTHROPIC_API_KEY").should eq("file-key")
+      end
+    end
+  end
+
+  it "uses a prompt_file config value to load the addendum" do
+    prompt_path : String? = "/tmp/bai-custom-prompt-#{Process.pid}.md"
+
+    BaiSpecSupport.with_config({"prompt_file" => prompt_path.not_nil!}) do
+      File.write(prompt_path.not_nil!, "Prefer fd over find.")
+
+      Bai::Prompt.system.should contain("Prefer fd over find.")
+    end
+  ensure
+    if path = prompt_path
+      File.delete(path) if File.exists?(path)
+    end
+  end
+
+  it "uses the config-dir prompt.md by default" do
+    BaiSpecSupport.with_config({"prompt.md" => "Prefer eza over ls."}) do
+      Bai::Prompt.system.should contain("Prefer eza over ls.")
+    end
+  end
+
   it "returns 1 for an unsupported provider" do
     BaiSpecSupport.with_env("BAI_PROVIDER", "bogus") do
       stdout = IO::Memory.new
@@ -105,74 +164,80 @@ describe Bai do
   end
 
   it "uses argv text as the query when provided" do
-    BaiSpecSupport.with_env("ANTHROPIC_API_KEY", "test-key") do
-      stdout = IO::Memory.new
-      stderr = IO::Memory.new
-      seen_query = ""
+    BaiSpecSupport.with_env("ANTHROPIC_API_KEY", nil) do
+      BaiSpecSupport.with_config({"anthropic_api_key" => "test-key"}) do
+        stdout = IO::Memory.new
+        stderr = IO::Memory.new
+        seen_query = ""
 
-      requester = ->(query : String) do
-        seen_query = query
-        "ls -lt"
+        requester = ->(query : String) do
+          seen_query = query
+          "ls -lt"
+        end
+
+        Bai.run(["list", "files"], stdout: stdout, stderr: stderr, command_requester: requester).should eq(0)
+
+        seen_query.should eq("list files")
+        stdout.to_s.should eq("ls -lt")
+        stderr.to_s.should eq("")
       end
-
-      Bai.run(["list", "files"], stdout: stdout, stderr: stderr, command_requester: requester).should eq(0)
-
-      seen_query.should eq("list files")
-      stdout.to_s.should eq("ls -lt")
-      stderr.to_s.should eq("")
     end
   end
 
   it "falls back to stdin when argv is empty and stdin is piped" do
-    BaiSpecSupport.with_env("ANTHROPIC_API_KEY", "test-key") do
-      stdin = IO::Memory.new("list files from stdin\n")
-      stdout = IO::Memory.new
-      stderr = IO::Memory.new
-      seen_query = ""
+    BaiSpecSupport.with_env("ANTHROPIC_API_KEY", nil) do
+      BaiSpecSupport.with_config({"anthropic_api_key" => "test-key"}) do
+        stdin = IO::Memory.new("list files from stdin\n")
+        stdout = IO::Memory.new
+        stderr = IO::Memory.new
+        seen_query = ""
 
-      requester = ->(query : String) do
-        seen_query = query
-        "find . -type f"
+        requester = ->(query : String) do
+          seen_query = query
+          "find . -type f"
+        end
+
+        Bai.run(
+          [] of String,
+          stdin: stdin,
+          stdout: stdout,
+          stderr: stderr,
+          stdin_tty: false,
+          command_requester: requester
+        ).should eq(0)
+
+        seen_query.should eq("list files from stdin")
+        stdout.to_s.should eq("find . -type f")
+        stderr.to_s.should eq("")
       end
-
-      Bai.run(
-        [] of String,
-        stdin: stdin,
-        stdout: stdout,
-        stderr: stderr,
-        stdin_tty: false,
-        command_requester: requester
-      ).should eq(0)
-
-      seen_query.should eq("list files from stdin")
-      stdout.to_s.should eq("find . -type f")
-      stderr.to_s.should eq("")
     end
   end
 
   it "does not call the clipboard copier when --no-copy is set" do
-    BaiSpecSupport.with_env("ANTHROPIC_API_KEY", "test-key") do
-      stdout = IO::Memory.new
-      stderr = IO::Memory.new
-      clipboard_called = false
+    BaiSpecSupport.with_env("ANTHROPIC_API_KEY", nil) do
+      BaiSpecSupport.with_config({"anthropic_api_key" => "test-key"}) do
+        stdout = IO::Memory.new
+        stderr = IO::Memory.new
+        clipboard_called = false
 
-      requester = ->(query : String) { "echo test" }
-      copier = ->(text : String) do
-        clipboard_called = true
-        true
+        requester = ->(query : String) { "echo test" }
+        copier = ->(text : String) do
+          clipboard_called = true
+          true
+        end
+
+        Bai.run(
+          ["--no-copy", "echo", "something"],
+          stdout: stdout,
+          stderr: stderr,
+          command_requester: requester,
+          clipboard_copier: copier
+        ).should eq(0)
+
+        clipboard_called.should be_false
+        stdout.to_s.should eq("echo test")
+        stderr.to_s.should eq("")
       end
-
-      Bai.run(
-        ["--no-copy", "echo", "something"],
-        stdout: stdout,
-        stderr: stderr,
-        command_requester: requester,
-        clipboard_copier: copier
-      ).should eq(0)
-
-      clipboard_called.should be_false
-      stdout.to_s.should eq("echo test")
-      stderr.to_s.should eq("")
     end
   end
 end

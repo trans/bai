@@ -1,7 +1,7 @@
 # :nodoc:
 module Bai::OpenAIClient
   API_URL = "https://api.openai.com/v1/responses"
-  MODEL   = ENV["BAI_OPENAI_MODEL"]? || "gpt-5-mini"
+  MODEL   = Bai::Config.value("BAI_OPENAI_MODEL") || "gpt-5-mini"
 
   def self.request_command(api_key : String, query : String) : String
     body = {

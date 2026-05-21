@@ -21,14 +21,13 @@ module Bai::Prompt
   end
 
   def self.default_addendum_path : String?
-    home = ENV["HOME"]?
-    return nil unless home
-    base = ENV["XDG_CONFIG_HOME"]? || "#{home}/.config"
-    "#{base}/bai/prompt.md"
+    config_dir = Bai::Config.dir
+    return nil unless config_dir
+    "#{config_dir}/prompt.md"
   end
 
   private def self.load_addendum : String
-    path = ENV["BAI_PROMPT_FILE"]? || default_addendum_path
+    path = Bai::Config.value("BAI_PROMPT_FILE") || default_addendum_path
     return "" unless path && File.exists?(path)
     File.read(path).strip
   rescue

@@ -3,6 +3,7 @@ require "json"
 require "option_parser"
 require "./bai/anthropic_client"
 require "./bai/clipboard"
+require "./bai/config"
 require "./bai/prompt"
 require "./bai/provider"
 require "./bai/openai_client"
@@ -11,14 +12,14 @@ require "./bai/system_context"
 # `Bai` exposes the CLI entry logic for the executable and for tests.
 module Bai
   # The current released version of the CLI.
-  VERSION = "0.3.0"
+  VERSION = "0.3.1"
 
   # :nodoc:
   API_URL    = "https://api.anthropic.com/v1/messages"
   # :nodoc:
   API_VER    = "2023-06-01"
   # :nodoc:
-  MODEL      = ENV["BAI_ANTHROPIC_MODEL"]? || ENV["BAI_MODEL"]? || "claude-haiku-4-5-20251001"
+  MODEL      = Config.value("BAI_ANTHROPIC_MODEL", legacy: "BAI_MODEL") || "claude-haiku-4-5-20251001"
   # :nodoc:
   MAX_TOKENS = 512
 
@@ -102,6 +103,7 @@ module Bai
     output.puts parser
     output.puts
     output.puts "Env vars:"
+    output.puts "  Env vars override matching files in #{Config.dir || "~/.config/bai"}."
     output.puts "  BAI_PROVIDER         Command model backend: anthropic or openai (default: anthropic)."
     output.puts "  ANTHROPIC_API_KEY    Required when BAI_PROVIDER=anthropic."
     output.puts "  OPENAI_API_KEY       Required when BAI_PROVIDER=openai."

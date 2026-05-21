@@ -2,7 +2,7 @@
 module Bai::Clipboard
   def self.enabled?(override : Bool?) : Bool
     return override unless override.nil?
-    case ENV["BAI_CLIPBOARD"]?.try(&.downcase)
+    case Bai::Config.value("BAI_CLIPBOARD").try(&.downcase)
     when "0", "off", "false", "no" then false
     else                                true
     end

@@ -24,10 +24,17 @@ just install                 # → /usr/local/bin/bai
 PREFIX=~/.local just install # → ~/.local/bin/bai
 ```
 
-Then export your Anthropic API key:
+Then either export your Anthropic API key:
 
 ```sh
 export ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Or drop it into your config directory:
+
+```sh
+mkdir -p ~/.config/bai
+printf '%s\n' 'sk-ant-...' > ~/.config/bai/anthropic_api_key
 ```
 
 ## Usage
@@ -70,6 +77,29 @@ content is ready to paste cleanly) and exits.
 | `BAI_OPENAI_MODEL`   | OpenAI model override (default: `gpt-5-mini`).                         |
 | `BAI_CLIPBOARD`      | Set to `0`/`off`/`false`/`no` to disable clipboard copy by default.    |
 | `BAI_PROMPT_FILE`    | Override the prompt addendum path (default: `~/.config/bai/prompt.md`).|
+
+Environment variables override matching files in `~/.config/bai/`
+(or `$XDG_CONFIG_HOME/bai/`, or `$BAI_CONFIG_DIR/` if you set that).
+For example:
+
+```text
+~/.config/bai/provider
+~/.config/bai/anthropic_api_key
+~/.config/bai/openai_api_key
+~/.config/bai/anthropic_model
+~/.config/bai/openai_model
+~/.config/bai/clipboard
+~/.config/bai/prompt_file
+~/.config/bai/prompt.md
+```
+
+The mapping rule is simple: lowercase the env var name and drop the `bai_`
+prefix when present. So `BAI_PROVIDER` becomes `provider`, and
+`ANTHROPIC_API_KEY` becomes `anthropic_api_key`.
+
+`prompt.md` is the one special case: it is the actual prompt-addendum content
+file, not a string setting. By contrast, `prompt_file` contains a path if you
+want the addendum to live somewhere else.
 
 ## Shell integration (Alt-Enter)
 
