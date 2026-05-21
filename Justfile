@@ -13,6 +13,9 @@ build-debug:
 test:
     crystal spec
 
+docs-api:
+    crystal docs --project-name bai --project-version "$$(sed -n 's/^version: //p' shard.yml)" --output docs/api
+
 run *args:
     crystal run src/main.cr -- {{args}}
 
@@ -26,7 +29,7 @@ uninstall:
     @echo "removed: {{bindir}}/bai"
 
 clean:
-    rm -rf bin lib .crystal
+    rm -rf bin lib .crystal docs/api
 
 fmt:
     crystal tool format

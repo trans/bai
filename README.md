@@ -152,6 +152,7 @@ you can verify it's loading.
 ```sh
 just build       # release binary at bin/bai
 just build-debug # debug build
+just docs-api    # generate HTML API docs at docs/api
 just run -- <query>
 just test
 just fmt

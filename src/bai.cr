@@ -2,14 +2,21 @@ require "http/client"
 require "json"
 require "option_parser"
 
+# `Bai` exposes the CLI entry logic for the executable and for tests.
 module Bai
+  # The current released version of the CLI.
   VERSION = "0.1.0"
 
+  # :nodoc:
   API_URL    = "https://api.anthropic.com/v1/messages"
+  # :nodoc:
   API_VER    = "2023-06-01"
+  # :nodoc:
   MODEL      = ENV["BAI_MODEL"]? || "claude-haiku-4-5-20251001"
+  # :nodoc:
   MAX_TOKENS = 512
 
+  # :nodoc:
   SYSTEM = <<-PROMPT
     You translate a natural-language request into a single shell command for the user's current shell.
     Output ONLY the command itself. No markdown fences, no prose, no leading $, no trailing newline.
@@ -17,6 +24,12 @@ module Bai
     If the request is ambiguous or unsafe, output the safest reasonable interpretation.
     PROMPT
 
+  # Parses CLI arguments and prints either help text, a dry-run prompt preview,
+  # or the proposed shell command.
+  #
+  # The query is read from `argv` first and falls back to stdin when piped input
+  # is available. Returns `0` on success, `1` on runtime or API failures, and
+  # `2` when no query was provided.
   def self.run(argv : Array(String)) : Int32
     show_help = false
     dry_run = false
@@ -200,8 +213,6 @@ module Bai
     "unknown"
   end
 
-  SHELL_NAMES = %w[fish zsh bash sh dash ash ksh tcsh csh nu xonsh elvish]
-
   private def self.shell_name : String
     parent_shell_name || ENV["SHELL"]?.try(&.split('/').last) || "sh"
   end
@@ -210,7 +221,11 @@ module Bai
     name = read_proc_comm(Process.ppid) || read_ps_comm(Process.ppid)
     return nil unless name
     cleaned = name.lstrip('-').split('/').last
-    SHELL_NAMES.includes?(cleaned) ? cleaned : nil
+    known_shell_names.includes?(cleaned) ? cleaned : nil
+  end
+
+  private def self.known_shell_names : Array(String)
+    %w[fish zsh bash sh dash ash ksh tcsh csh nu xonsh elvish]
   end
 
   private def self.read_proc_comm(pid : Int) : String?
