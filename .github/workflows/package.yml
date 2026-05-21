@@ -1,0 +1,109 @@
+name: Package
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  arch:
+    name: Arch Package
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          pacman -Syu --noconfirm --needed \
+            crystal git openssl pcre2 gc gcc-libs zlib brotli zstd
+
+      - name: Verify release version
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          version="$(sed -n 's/^version: //p' shard.yml)"
+          if [ "${{ github.event_name }}" = "release" ] && [ "$TAG_NAME" != "v$version" ]; then
+            echo "tag $TAG_NAME does not match shard.yml version v$version"
+            exit 1
+          fi
+
+      - name: Build Arch package with makepkg
+        run: |
+          version="$(sed -n 's/^version: //p' shard.yml)"
+          mkdir -p pkg
+          git ls-files -z | tar --null -T - \
+            --transform "s,^,bai-${version}/," \
+            -czf "pkg/bai-${version}.tar.gz"
+          useradd -m builder
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+          su builder -c "cd '$GITHUB_WORKSPACE/pkg' && makepkg -f --noconfirm"
+
+      - name: Upload Arch artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bai-arch
+          path: pkg/*.pkg.tar.zst
+
+  deb:
+    name: Debian Package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Crystal and build dependencies
+        run: |
+          curl -fsSL https://crystal-lang.org/install.sh | sudo bash
+          sudo apt-get update
+          sudo apt-get install -y \
+            crystal build-essential \
+            libssl-dev libpcre2-dev libgc-dev zlib1g-dev \
+            libbrotli-dev libzstd-dev \
+            dpkg-dev debhelper
+
+      - name: Verify release version
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          version="$(sed -n 's/^version: //p' shard.yml)"
+          if [ "${{ github.event_name }}" = "release" ] && [ "$TAG_NAME" != "v$version" ]; then
+            echo "tag $TAG_NAME does not match shard.yml version v$version"
+            exit 1
+          fi
+
+      - name: Prepare Debian packaging
+        run: ln -s pkg/debian debian
+
+      - name: Build Debian package
+        run: dpkg-buildpackage -us -uc -b
+
+      - name: Collect Debian artifacts
+        run: |
+          mkdir -p dist
+          cp ../bai_*.deb dist/
+          cp ../bai_*.buildinfo dist/ 2>/dev/null || true
+          cp ../bai_*.changes dist/ 2>/dev/null || true
+
+      - name: Upload Debian artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bai-deb
+          path: dist/*
+
+  release-assets:
+    name: Upload Release Assets
+    if: github.event_name == 'release'
+    needs: [arch, deb]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            bai-arch/*.pkg.tar.zst
+            bai-deb/*.deb

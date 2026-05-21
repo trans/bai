@@ -32,6 +32,11 @@ pkg-deb:
     cd "pkg/build/bai-{{version}}" && dpkg-buildpackage -us -uc -b
     mv pkg/build/*.deb pkg/build/*.buildinfo pkg/build/*.changes pkg/ 2>/dev/null || true
 
+release-check:
+    crystal spec
+    just pkg-src
+    just pkg-arch
+
 run *args:
     crystal run src/main.cr -- {{args}}
 

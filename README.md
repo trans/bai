@@ -156,6 +156,7 @@ just docs-api    # generate HTML API docs at docs/api
 just pkg-src     # snapshot tracked files into pkg/bai-<version>.tar.gz
 just pkg-arch    # build an Arch package in pkg/
 just pkg-deb     # build Debian package artifacts in pkg/
+just release-check # run spec + package checks before tagging a release
 just run -- <query>
 just test
 just fmt
