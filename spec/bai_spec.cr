@@ -47,6 +47,9 @@ describe Bai do
     Bai.run(["--help"], stdout: stdout, stderr: stderr).should eq(0)
 
     stdout.to_s.should contain("Usage: bai [options]")
+    stdout.to_s.should contain("--explain")
+    stdout.to_s.should contain("--json")
+    stdout.to_s.should contain("--strict")
     stderr.to_s.should eq("")
   end
 
@@ -58,6 +61,30 @@ describe Bai do
 
     stdout.to_s.should eq("#{Bai::VERSION}\n")
     stderr.to_s.should eq("")
+  end
+
+  it "prints effective config without requiring a query" do
+    BaiSpecSupport.with_env("BAI_PROVIDER", nil) do
+      BaiSpecSupport.with_env("ANTHROPIC_API_KEY", nil) do
+        BaiSpecSupport.with_config({
+          "provider"           => "openai",
+          "openai_api_key"     => "sk-openai-test-1234",
+          "anthropic_api_key"  => "sk-ant-test-5678",
+          "shell"              => "zsh",
+        }) do
+          stdout = IO::Memory.new
+          stderr = IO::Memory.new
+
+          Bai.run(["--show-config"], stdout: stdout, stderr: stderr).should eq(0)
+
+          stdout.to_s.should contain("provider: openai")
+          stdout.to_s.should contain("shell: zsh")
+          stdout.to_s.should contain("anthropic_api_key: sk-a...5678")
+          stdout.to_s.should contain("openai_api_key: sk-o...1234")
+          stderr.to_s.should eq("")
+        end
+      end
+    end
   end
 
   it "returns 2 when no query is given" do
@@ -115,6 +142,42 @@ describe Bai do
     end
   end
 
+  it "uses a shell override in dry-run output" do
+    stdout = IO::Memory.new
+    stderr = IO::Memory.new
+
+    Bai.run(["--dry-run", "--shell", "nu", "list", "files"], stdout: stdout, stderr: stderr).should eq(0)
+
+    stdout.to_s.should contain("Shell: nu")
+    stderr.to_s.should eq("")
+  end
+
+  it "reads the shell from config when no override is provided" do
+    BaiSpecSupport.with_env("BAI_SHELL", nil) do
+      BaiSpecSupport.with_config({"shell" => "fish"}) do
+        Bai::SystemContext.shell_name.should eq("fish")
+      end
+    end
+  end
+
+  it "lets env vars override the shell config file" do
+    BaiSpecSupport.with_env("BAI_SHELL", "bash") do
+      BaiSpecSupport.with_config({"shell" => "fish"}) do
+        Bai::SystemContext.shell_name.should eq("bash")
+      end
+    end
+  end
+
+  it "returns 1 for an invalid shell override" do
+    stdout = IO::Memory.new
+    stderr = IO::Memory.new
+
+    Bai.run(["--show-config", "--shell", "bogus"], stdout: stdout, stderr: stderr).should eq(1)
+
+    stdout.to_s.should eq("")
+    stderr.to_s.should eq("bai: unsupported shell: bogus\n")
+  end
+
   it "lets env vars override config files" do
     BaiSpecSupport.with_env("BAI_PROVIDER", "anthropic") do
       BaiSpecSupport.with_config({"provider" => "openai"}) do
@@ -170,9 +233,9 @@ describe Bai do
         stderr = IO::Memory.new
         seen_query = ""
 
-        requester = ->(query : String) do
+        requester = ->(query : String, options : Bai::RequestOptions) do
           seen_query = query
-          "ls -lt"
+          Bai::GenerationResult.new("ls -lt")
         end
 
         Bai.run(["list", "files"], stdout: stdout, stderr: stderr, command_requester: requester).should eq(0)
@@ -192,9 +255,9 @@ describe Bai do
         stderr = IO::Memory.new
         seen_query = ""
 
-        requester = ->(query : String) do
+        requester = ->(query : String, options : Bai::RequestOptions) do
           seen_query = query
-          "find . -type f"
+          Bai::GenerationResult.new("find . -type f")
         end
 
         Bai.run(
@@ -220,7 +283,7 @@ describe Bai do
         stderr = IO::Memory.new
         clipboard_called = false
 
-        requester = ->(query : String) { "echo test" }
+        requester = ->(query : String, options : Bai::RequestOptions) { Bai::GenerationResult.new("echo test") }
         copier = ->(text : String) do
           clipboard_called = true
           true
@@ -239,6 +302,92 @@ describe Bai do
         stderr.to_s.should eq("")
       end
     end
+  end
+
+  it "prints the explanation to stderr when --explain is set" do
+    stdout = IO::Memory.new
+    stderr = IO::Memory.new
+
+    requester = ->(query : String, options : Bai::RequestOptions) do
+      options.explain.should be_true
+      Bai::GenerationResult.new("rg foo src", "Uses ripgrep to search the source tree quickly.")
+    end
+
+    Bai.run(["--explain", "find", "foo"], stdout: stdout, stderr: stderr, command_requester: requester).should eq(0)
+
+    stdout.to_s.should eq("rg foo src")
+    stderr.to_s.should eq("why: Uses ripgrep to search the source tree quickly.\n")
+  end
+
+  it "prints machine-readable json to stdout when --json is set" do
+    stdout = IO::Memory.new
+    stderr = IO::Memory.new
+
+    requester = ->(query : String, options : Bai::RequestOptions) do
+      options.json.should be_true
+      Bai::GenerationResult.new("rg foo src", "Uses ripgrep to search the source tree quickly.")
+    end
+
+    Bai.run(["--json", "find", "foo"], stdout: stdout, stderr: stderr, command_requester: requester).should eq(0)
+
+    json = JSON.parse(stdout.to_s).as_h
+    json["command"].as_s.should eq("rg foo src")
+    json["explanation"].as_s.should eq("Uses ripgrep to search the source tree quickly.")
+    json["provider"].as_s.should eq("anthropic")
+    json["strict"].as_bool.should be_false
+    stderr.to_s.should eq("")
+  end
+
+  it "keeps explanation in json instead of stderr when --json and --explain are combined" do
+    stdout = IO::Memory.new
+    stderr = IO::Memory.new
+
+    requester = ->(query : String, options : Bai::RequestOptions) do
+      options.json.should be_true
+      options.explain.should be_true
+      Bai::GenerationResult.new("ls -lt", "Lists files sorted by modification time.")
+    end
+
+    Bai.run(["--json", "--explain", "list", "files"], stdout: stdout, stderr: stderr, command_requester: requester).should eq(0)
+
+    json = JSON.parse(stdout.to_s).as_h
+    json["command"].as_s.should eq("ls -lt")
+    json["explanation"].as_s.should eq("Lists files sorted by modification time.")
+    stderr.to_s.should eq("")
+  end
+
+  it "returns 1 in strict mode when no command is produced" do
+    stdout = IO::Memory.new
+    stderr = IO::Memory.new
+
+    requester = ->(query : String, options : Bai::RequestOptions) do
+      options.strict.should be_true
+      Bai::GenerationResult.new("", "The request is ambiguous about which directory to search.")
+    end
+
+    Bai.run(["--strict", "find", "recent", "files"], stdout: stdout, stderr: stderr, command_requester: requester).should eq(1)
+
+    stdout.to_s.should eq("")
+    stderr.to_s.should eq("bai: The request is ambiguous about which directory to search.\n")
+  end
+
+  it "returns json plus a nonzero exit code in strict json mode when no command is produced" do
+    stdout = IO::Memory.new
+    stderr = IO::Memory.new
+
+    requester = ->(query : String, options : Bai::RequestOptions) do
+      options.json.should be_true
+      options.strict.should be_true
+      Bai::GenerationResult.new("", "The request is ambiguous about which directory to search.")
+    end
+
+    Bai.run(["--json", "--strict", "find", "recent", "files"], stdout: stdout, stderr: stderr, command_requester: requester).should eq(1)
+
+    json = JSON.parse(stdout.to_s).as_h
+    json["command"].as_s.should eq("")
+    json["explanation"].as_s.should eq("The request is ambiguous about which directory to search.")
+    json["strict"].as_bool.should be_true
+    stderr.to_s.should eq("")
   end
 end
 
@@ -361,6 +510,40 @@ describe Bai::OpenAIClient do
   it "raises a clear error when the response is invalid json" do
     expect_raises(Exception, "API response was not valid JSON") do
       Bai::OpenAIClient.extract_command("{not json")
+    end
+  end
+end
+
+describe Bai::ModelOutput do
+  it "parses a structured explain response" do
+    options = Bai::RequestOptions.new(explain: true)
+    text = %({"command":"ls -lt","explanation":"Lists files sorted by modification time."})
+
+    result = Bai::ModelOutput.parse(text, options)
+
+    result.command.should eq("ls -lt")
+    result.explanation.should eq("Lists files sorted by modification time.")
+  end
+
+  it "sanitizes fenced structured output" do
+    options = Bai::RequestOptions.new(explain: true)
+    text = <<-TEXT
+      ```json
+      {"command":"find . -type f","explanation":"Searches for regular files recursively."}
+      ```
+      TEXT
+
+    result = Bai::ModelOutput.parse(text, options)
+
+    result.command.should eq("find . -type f")
+    result.explanation.should eq("Searches for regular files recursively.")
+  end
+
+  it "raises a clear error for invalid structured json" do
+    options = Bai::RequestOptions.new(explain: true)
+
+    expect_raises(Exception, "model response was not valid JSON") do
+      Bai::ModelOutput.parse("not json", options)
     end
   end
 end

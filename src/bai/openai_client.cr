@@ -3,11 +3,11 @@ module Bai::OpenAIClient
   API_URL = "https://api.openai.com/v1/responses"
   MODEL   = Bai::Config.value("BAI_OPENAI_MODEL") || "gpt-5-mini"
 
-  def self.request_command(api_key : String, query : String) : String
+  def self.request_command(api_key : String, query : String, options : Bai::RequestOptions) : Bai::GenerationResult
     body = {
       model:        MODEL,
-      instructions: Bai::Prompt.system,
-      input:        Bai::Prompt.user_message(query),
+      instructions: Bai::Prompt.system(options),
+      input:        Bai::Prompt.user_message(query, options.shell_override),
     }.to_json
 
     headers = HTTP::Headers{
@@ -20,15 +20,18 @@ module Bai::OpenAIClient
       raise "API error #{resp.status_code}: #{resp.body}"
     end
 
-    extract_command(resp.body)
+    extract_result(resp.body, options)
   end
 
   def self.extract_command(response_body : String) : String
+    extract_result(response_body, Bai::RequestOptions.new).command
+  end
+
+  def self.extract_result(response_body : String, options : Bai::RequestOptions) : Bai::GenerationResult
     json = JSON.parse(response_body)
 
     if output_text = json["output_text"]?.try(&.as_s?)
-      sanitized = sanitize(output_text)
-      return sanitized unless sanitized.empty?
+      return Bai::ModelOutput.parse(output_text, options)
     end
 
     outputs = json["output"]?.try(&.as_a?) || raise "API response missing output array"
@@ -47,21 +50,13 @@ module Bai::OpenAIClient
         text = block_hash["text"]?.try(&.as_s?)
         next unless text
 
-        sanitized = sanitize(text)
-        return sanitized unless sanitized.empty?
+        result = Bai::ModelOutput.parse(text, options)
+        return result unless result.command.empty? && result.explanation.nil?
       end
     end
 
     raise "API response contained no usable output text"
   rescue ex : JSON::ParseException
     raise "API response was not valid JSON: #{ex.message}"
-  end
-
-  private def self.sanitize(text : String) : String
-    s = text.strip
-    if s.starts_with?("```")
-      s = s.sub(/\A```[^\n]*\n?/, "").sub(/\n?```\z/, "")
-    end
-    s.strip
   end
 end

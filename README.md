@@ -87,6 +87,11 @@ content is ready to paste cleanly) and exits.
 | Flag             | Effect                                                                      |
 | ---------------- | --------------------------------------------------------------------------- |
 | `-n, --dry-run`  | Print the model + full prompt that *would* be sent, then exit. No API call. |
+| `--explain`      | Print a brief explanation to stderr while keeping the command on stdout.    |
+| `--json`         | Print machine-readable JSON to stdout.                                       |
+| `--strict`       | Refuse ambiguous or unsafe requests instead of guessing.                    |
+| `--show-config`  | Print effective config values (with secrets redacted), then exit.            |
+| `--shell <name>` | Override detected shell context for command generation.                       |
 | `--copy`         | Force clipboard copy on (overrides `BAI_CLIPBOARD`).                        |
 | `--no-copy`      | Force clipboard copy off.                                                   |
 | `-h, --help`     | Show help.                                                                  |
@@ -102,6 +107,7 @@ content is ready to paste cleanly) and exits.
 | `BAI_ANTHROPIC_MODEL`| Preferred Anthropic model override (`claude-haiku-4-5-20251001`).      |
 | `BAI_MODEL`          | Legacy alias for `BAI_ANTHROPIC_MODEL`.                                |
 | `BAI_OPENAI_MODEL`   | OpenAI model override (default: `gpt-5-mini`).                         |
+| `BAI_SHELL`          | Override detected shell context (`fish`, `bash`, `zsh`, `nu`, etc.).  |
 | `BAI_CLIPBOARD`      | Set to `0`/`off`/`false`/`no` to disable clipboard copy by default.    |
 | `BAI_PROMPT_FILE`    | Override the prompt addendum path (default: `~/.config/bai/prompt.md`).|
 
@@ -115,6 +121,7 @@ For example:
 ~/.config/bai/openai_api_key
 ~/.config/bai/anthropic_model
 ~/.config/bai/openai_model
+~/.config/bai/shell
 ~/.config/bai/clipboard
 ~/.config/bai/prompt_file
 ~/.config/bai/prompt.md
@@ -191,6 +198,15 @@ Editor: nvim
 
 Inspect exactly what gets sent with `bai --dry-run <query>`.
 
+If parent-shell detection is wrong because you are calling `bai` from an editor,
+launcher, or wrapper, force it explicitly:
+
+```sh
+bai --shell zsh list files modified today
+```
+
+Or set it persistently with `BAI_SHELL` / `~/.config/bai/shell`.
+
 ## Prompt addendum
 
 Drop a file at `~/.config/bai/prompt.md` (or anywhere, pointed to by
@@ -207,6 +223,51 @@ Avoid sudo unless the request clearly requires it.
 
 `bai --dry-run` will show your addendum in the rendered system prompt so
 you can verify it's loading.
+
+## Strict and explain modes
+
+Use `--explain` when you want a short reason for the generated command without
+breaking shell pipelines or command substitution:
+
+```sh
+bai --explain find large files
+```
+
+The command still goes to stdout. The explanation is printed to stderr.
+
+Use `--strict` when you would rather have `bai` refuse an ambiguous request
+than guess:
+
+```sh
+bai --strict find the latest logs
+```
+
+In strict mode, `bai` exits with an error if the model cannot infer a safe,
+specific command confidently enough.
+
+## JSON output
+
+Use `--json` when you want machine-readable output for wrappers, editors, or
+shell integration:
+
+```sh
+bai --json find large files
+```
+
+The JSON includes:
+
+```json
+{
+  "command": "find . -type f",
+  "explanation": "Searches recursively for regular files.",
+  "provider": "anthropic",
+  "shell": "zsh",
+  "strict": false
+}
+```
+
+If you combine `--json` with `--explain`, the explanation stays in the JSON
+payload instead of being printed separately to stderr.
 
 ## Development
 
