@@ -153,3 +153,51 @@ describe Bai do
     end
   end
 end
+
+describe Bai::AnthropicClient do
+  it "extracts the first usable text block" do
+    response = {
+      content: [
+        {type: "tool_use", id: "toolu_123", name: "noop"},
+        {type: "text", text: "ls -lt"},
+      ],
+    }.to_json
+
+    Bai::AnthropicClient.extract_command(response).should eq("ls -lt")
+  end
+
+  it "sanitizes fenced command output" do
+    response = {
+      content: [
+        {type: "text", text: "```bash\nfind . -type f\n```"},
+      ],
+    }.to_json
+
+    Bai::AnthropicClient.extract_command(response).should eq("find . -type f")
+  end
+
+  it "raises a clear error when content is missing" do
+    expect_raises(Exception, "API response missing content array") do
+      Bai::AnthropicClient.extract_command({id: "msg_123"}.to_json)
+    end
+  end
+
+  it "raises a clear error when no text blocks are usable" do
+    response = {
+      content: [
+        {type: "tool_use", id: "toolu_123", name: "noop"},
+        {type: "text", text: "   "},
+      ],
+    }.to_json
+
+    expect_raises(Exception, "API response contained no usable text content") do
+      Bai::AnthropicClient.extract_command(response)
+    end
+  end
+
+  it "raises a clear error when the response is invalid json" do
+    expect_raises(Exception, "API response was not valid JSON") do
+      Bai::AnthropicClient.extract_command("{not json")
+    end
+  end
+end
