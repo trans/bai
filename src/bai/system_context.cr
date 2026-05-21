@@ -1,15 +1,33 @@
 # :nodoc:
 module Bai::SystemContext
-  def self.gather : String
+  def self.gather(shell_override : String? = nil) : String
     String.build do |s|
       s << "OS: " << os_pretty_name << "\n"
       s << "Kernel: " << uname("-r") << "\n"
       s << "Arch: " << uname("-m") << "\n"
-      s << "Shell: " << shell_name << "\n"
+      s << "Shell: " << shell_name(shell_override) << "\n"
       s << "CWD: " << (Dir.current rescue "?") << "\n"
       s << "HOME: " << (ENV["HOME"]? || "?") << "\n"
       s << "Editor: " << (ENV["EDITOR"]? || ENV["VISUAL"]? || "unset") << "\n"
     end
+  end
+
+  def self.shell_name(shell_override : String? = nil) : String
+    if shell_override
+      return validate_shell!(shell_override)
+    end
+
+    if configured_shell = Bai::Config.value("BAI_SHELL")
+      return validate_shell!(configured_shell)
+    end
+
+    parent_shell_name || ENV["SHELL"]?.try(&.split('/').last) || "sh"
+  end
+
+  def self.validate_shell!(shell_name : String) : String
+    cleaned = shell_name.downcase.lstrip('-').split('/').last
+    return cleaned if known_shell_names.includes?(cleaned)
+    raise "unsupported shell: #{shell_name}"
   end
 
   private def self.os_pretty_name : String
@@ -31,10 +49,6 @@ module Bai::SystemContext
     io.to_s.strip
   rescue
     "unknown"
-  end
-
-  private def self.shell_name : String
-    parent_shell_name || ENV["SHELL"]?.try(&.split('/').last) || "sh"
   end
 
   private def self.parent_shell_name : String?
