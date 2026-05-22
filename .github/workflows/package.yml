@@ -14,7 +14,7 @@ jobs:
       - name: Install git for checkout
         run: pacman -Sy --noconfirm git
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install build dependencies
         run: |
@@ -44,7 +44,7 @@ jobs:
           su builder -c "cd '$GITHUB_WORKSPACE/pkg' && makepkg -f --noconfirm"
 
       - name: Upload Arch artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: bai-arch
           path: pkg/*.pkg.tar.zst
@@ -53,7 +53,7 @@ jobs:
     name: Debian Package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install Crystal and build dependencies
         run: |
@@ -89,7 +89,7 @@ jobs:
           cp ../bai_*.changes dist/ 2>/dev/null || true
 
       - name: Upload Debian artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: bai-deb
           path: dist/*
@@ -103,7 +103,7 @@ jobs:
       contents: write
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
 
       - name: Upload to release
         uses: softprops/action-gh-release@v2
