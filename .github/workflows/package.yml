@@ -11,12 +11,15 @@ jobs:
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     steps:
+      - name: Install git for checkout
+        run: pacman -Sy --noconfirm git
+
       - uses: actions/checkout@v4
 
       - name: Install build dependencies
         run: |
           pacman -Syu --noconfirm --needed \
-            crystal git openssl pcre2 gc gcc-libs zlib brotli zstd
+            crystal openssl pcre2 gc gcc-libs zlib brotli zstd
 
       - name: Verify release version
         env:
