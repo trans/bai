@@ -35,7 +35,8 @@ jobs:
         run: |
           version="$(sed -n 's/^version: //p' shard.yml)"
           mkdir -p pkg
-          git ls-files -z | tar --null -T - \
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git -C "$GITHUB_WORKSPACE" ls-files -z | tar --null -T - \
             --transform "s,^,bai-${version}/," \
             -czf "pkg/bai-${version}.tar.gz"
           useradd -m builder
