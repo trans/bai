@@ -1,3 +1,12 @@
+bai (0.4.1-1) unstable; urgency=medium
+
+  * Fix GitHub Actions packaging so Arch and Debian release assets build
+    successfully from published releases.
+  * Update package workflow actions to the current Node 24-compatible
+    versions.
+
+ -- trans <transfire@gmail.com>  Fri, 22 May 2026 00:00:00 +0000
+
 bai (0.4.0-1) unstable; urgency=medium
 
   * Add shell override support via --shell, BAI_SHELL, and config files.

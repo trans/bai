@@ -37,7 +37,7 @@ end
 
 describe Bai do
   it "exposes a version string" do
-    Bai::VERSION.should eq("0.4.0")
+    Bai::VERSION.should eq("0.4.1")
   end
 
   it "prints help to stdout" do
