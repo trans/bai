@@ -6,6 +6,8 @@ associated with clarity and understanding.*
 A tiny CLI that translates a natural-language request into a shell command.
 You stay the approval gate — `bai` only proposes; the shell runs.
 
+[Landing page](https://trans.github.io/bai/) · [API docs](https://trans.github.io/bai/api/index.html)
+
 ```
 $ bai list files in cwd sorted by date
 ls -lt

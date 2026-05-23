@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>bai | AI shell-command helper</title>
+    <meta
+      name="description"
+      content="bai translates natural-language shell requests into proposed commands. You stay the approval gate."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #f5efe4;
+        --paper-strong: #fffaf1;
+        --ink: #1e1a17;
+        --muted: #655b50;
+        --line: rgba(30, 26, 23, 0.12);
+        --accent: #b84826;
+        --accent-strong: #8d2f16;
+        --accent-soft: rgba(184, 72, 38, 0.12);
+        --olive: #556b2f;
+        --card: rgba(255, 250, 241, 0.84);
+        --shadow: 0 24px 80px rgba(69, 37, 25, 0.16);
+        --radius: 28px;
+        --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+        --serif: "Fraunces", "Iowan Old Style", "Palatino Linotype", serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--ink);
+        font-family: var(--mono);
+        background:
+          radial-gradient(circle at top left, rgba(184, 72, 38, 0.16), transparent 30%),
+          radial-gradient(circle at 85% 12%, rgba(85, 107, 47, 0.18), transparent 22%),
+          linear-gradient(180deg, #f9f2e5 0%, #efe5d5 100%);
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.38;
+        background-image:
+          linear-gradient(rgba(30, 26, 23, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(30, 26, 23, 0.03) 1px, transparent 1px);
+        background-size: 32px 32px;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .shell-noise {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+      }
+
+      .shell-noise span {
+        position: absolute;
+        color: rgba(141, 47, 22, 0.12);
+        font-size: 0.78rem;
+        animation: drift 18s linear infinite;
+        white-space: nowrap;
+      }
+
+      .shell-noise span:nth-child(1) {
+        top: 11%;
+        left: 8%;
+        animation-delay: -2s;
+      }
+
+      .shell-noise span:nth-child(2) {
+        top: 26%;
+        right: 7%;
+        animation-delay: -8s;
+      }
+
+      .shell-noise span:nth-child(3) {
+        bottom: 25%;
+        left: 10%;
+        animation-delay: -11s;
+      }
+
+      .shell-noise span:nth-child(4) {
+        bottom: 12%;
+        right: 12%;
+        animation-delay: -5s;
+      }
+
+      @keyframes drift {
+        0%,
+        100% {
+          transform: translate3d(0, 0, 0);
+        }
+
+        50% {
+          transform: translate3d(0, -14px, 0);
+        }
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .page {
+        position: relative;
+        width: min(1200px, calc(100vw - 2rem));
+        margin: 0 auto;
+        padding: 1rem 0 4rem;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 0 1.5rem;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.8rem;
+        text-decoration: none;
+      }
+
+      .brand-mark {
+        width: 2.5rem;
+        height: 2.5rem;
+        display: grid;
+        place-items: center;
+        border-radius: 18px;
+        background: var(--ink);
+        color: var(--paper-strong);
+        font-weight: 600;
+      }
+
+      .brand-copy strong,
+      .hero-copy h1,
+      .section h2,
+      .panel h3 {
+        font-family: var(--serif);
+      }
+
+      .brand-copy strong {
+        display: block;
+        font-size: 1rem;
+      }
+
+      .brand-copy span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .top-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+      }
+
+      .chip,
+      .button {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        text-decoration: none;
+        transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+      }
+
+      .chip {
+        padding: 0.72rem 1rem;
+        background: rgba(255, 250, 241, 0.56);
+        backdrop-filter: blur(10px);
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        padding: 0.95rem 1.3rem;
+        background: var(--paper-strong);
+        box-shadow: 0 10px 24px rgba(30, 26, 23, 0.08);
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+
+      .button.primary {
+        background: var(--ink);
+        border-color: transparent;
+        color: var(--paper-strong);
+      }
+
+      .button.secondary {
+        background: rgba(255, 250, 241, 0.72);
+      }
+
+      .chip:hover,
+      .button:hover,
+      .button:focus-visible {
+        transform: translateY(-1px);
+        border-color: rgba(30, 26, 23, 0.28);
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 1.4rem;
+        align-items: stretch;
+      }
+
+      .hero-copy,
+      .hero-demo,
+      .section,
+      .panel,
+      .install-card {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--card);
+        backdrop-filter: blur(12px);
+        box-shadow: var(--shadow);
+      }
+
+      .hero-copy,
+      .hero-demo {
+        animation: rise 480ms ease both;
+      }
+
+      .hero-copy {
+        padding: clamp(1.8rem, 4vw, 3.6rem);
+      }
+
+      .hero-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.7rem;
+        margin-bottom: 1.1rem;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent-strong);
+        font-size: 0.78rem;
+      }
+
+      .hero-copy h1 {
+        margin: 0;
+        font-size: clamp(3rem, 8vw, 6.4rem);
+        line-height: 0.97;
+        letter-spacing: -0.035em;
+        word-spacing: 0.06em;
+      }
+
+      .hero-copy h1 .accent-word {
+        color: var(--accent-strong);
+      }
+
+      .hero-copy p {
+        max-width: 40rem;
+        color: var(--muted);
+        font-size: clamp(1rem, 2vw, 1.12rem);
+        line-height: 1.75;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.9rem;
+        margin: 1.5rem 0 1.8rem;
+      }
+
+      .hero-meta {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.8rem;
+      }
+
+      .meta-card {
+        padding: 1rem;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.38);
+        border: 1px solid rgba(30, 26, 23, 0.08);
+      }
+
+      .meta-card strong {
+        display: block;
+        margin-bottom: 0.3rem;
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+
+      .meta-card span {
+        font-size: 1rem;
+      }
+
+      .hero-demo {
+        position: relative;
+        padding: 1rem;
+        overflow: hidden;
+      }
+
+      .hero-demo::after {
+        content: "";
+        position: absolute;
+        inset: auto -10% -18% 24%;
+        height: 42%;
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(184, 72, 38, 0.18), transparent 64%);
+        pointer-events: none;
+      }
+
+      .terminal {
+        position: relative;
+        z-index: 1;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: 1rem 1rem 1.1rem;
+        border-radius: 24px;
+        background: #1d1815;
+        color: #f7efe3;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      }
+
+      .terminal-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        color: rgba(247, 239, 227, 0.75);
+        font-size: 0.8rem;
+      }
+
+      .lights {
+        display: inline-flex;
+        gap: 0.35rem;
+      }
+
+      .lights i {
+        display: block;
+        width: 0.7rem;
+        height: 0.7rem;
+        border-radius: 999px;
+        background: rgba(247, 239, 227, 0.24);
+      }
+
+      .terminal pre {
+        margin: 0;
+        white-space: pre-wrap;
+        font-size: 0.95rem;
+        line-height: 1.85;
+      }
+
+      .terminal-output {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        gap: 0.2rem;
+        min-height: 16.5rem;
+        margin: 0;
+        white-space: pre-wrap;
+        font-size: 0.95rem;
+        line-height: 1.85;
+      }
+
+      .terminal-line {
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .prompt {
+        color: #f4a261;
+      }
+
+      .query {
+        color: #f7efe3;
+      }
+
+      .response {
+        color: #9fd3a7;
+      }
+
+      .muted-output {
+        color: #c9c0b6;
+      }
+
+      .blank {
+        min-height: 1.2em;
+      }
+
+      .terminal-cursor {
+        display: inline-block;
+        color: #f4a261;
+        animation: blink 1s steps(1, end) infinite;
+      }
+
+      @keyframes blink {
+        0%,
+        49% {
+          opacity: 1;
+        }
+
+        50%,
+        100% {
+          opacity: 0;
+        }
+      }
+
+      .clipboard {
+        display: block;
+        margin-top: auto;
+        min-height: 3rem;
+        padding: 1.2rem 0.85rem 0.65rem;
+        border-radius: 14px;
+        background: rgba(159, 211, 167, 0.12);
+        color: #9fd3a7;
+        font-size: 0.82rem;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 1.2rem;
+        margin-top: 1.2rem;
+      }
+
+      .section {
+        padding: 1.5rem;
+      }
+
+      .section h2,
+      .panel h3 {
+        margin: 0 0 0.8rem;
+        line-height: 1;
+        letter-spacing: -0.03em;
+      }
+
+      .section h2 {
+        font-size: clamp(1.9rem, 4vw, 3rem);
+      }
+
+      .section p,
+      .panel p,
+      .install-card p,
+      .install-card li {
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .section.wide {
+        grid-column: span 7;
+      }
+
+      .section.tall {
+        grid-column: span 5;
+      }
+
+      .feature-list,
+      .mode-list {
+        display: grid;
+        gap: 0.8rem;
+        margin: 1.2rem 0 0;
+      }
+
+      .feature,
+      .mode {
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-left: 4px solid var(--accent);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.34);
+      }
+
+      .feature strong,
+      .mode strong {
+        display: block;
+        margin-bottom: 0.35rem;
+      }
+
+      .install-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .install-card {
+        padding: 1.3rem;
+      }
+
+      .install-card h3 {
+        margin: 0 0 0.6rem;
+        font-size: 1rem;
+      }
+
+      .install-card pre,
+      .snippet {
+        margin: 0.9rem 0 0;
+        overflow-x: auto;
+        padding: 1rem;
+        border-radius: 18px;
+        background: rgba(30, 26, 23, 0.94);
+        color: #f7efe3;
+        font-size: 0.88rem;
+      }
+
+      .panels {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .panel {
+        padding: 1.4rem;
+      }
+
+      .callout {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 1.2rem;
+        padding: 1.2rem 1.3rem;
+        border-radius: 24px;
+        background: linear-gradient(135deg, rgba(85, 107, 47, 0.16), rgba(184, 72, 38, 0.14));
+      }
+
+      .callout strong {
+        display: block;
+        margin-bottom: 0.25rem;
+      }
+
+      footer {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 1.4rem;
+        padding: 1.2rem 0 0.4rem;
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      @media (max-width: 1024px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+
+        .section.wide,
+        .section.tall {
+          grid-column: span 12;
+        }
+
+        .install-grid,
+        .panels,
+        .hero-meta {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .page {
+          width: min(100vw - 1rem, 1200px);
+        }
+
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .top-links,
+        .hero-actions {
+          width: 100%;
+        }
+
+        .chip,
+        .button {
+          width: 100%;
+        }
+
+        .hero-copy {
+          padding: 1.35rem;
+        }
+
+        .section,
+        .panel,
+        .install-card {
+          padding: 1.15rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell-noise" aria-hidden="true">
+      <span>$ bai find largest folders in ~/Projects</span>
+      <span>$ bai --strict rename jpg files to lowercase</span>
+      <span>$ bai count lines of Crystal code in src</span>
+      <span>$ bai --shell fish list files modified today</span>
+    </div>
+
+    <main class="page">
+      <header class="topbar">
+        <a class="brand" href="./">
+          <div class="brand-mark">bai</div>
+          <div class="brand-copy">
+            <strong>bai</strong>
+            <span>AI shell-command helper</span>
+          </div>
+        </a>
+
+        <nav class="top-links" aria-label="Primary">
+          <a class="chip" href="https://github.com/trans/bai">GitHub</a>
+          <a class="chip" href="https://github.com/trans/bai/releases/latest">Releases</a>
+          <a class="chip" href="./api/">API docs</a>
+        </nav>
+      </header>
+
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="hero-kicker">natural language in, shell command out</div>
+          <h1><span class="accent-word">bai</span> keeps the command line sharp.</h1>
+          <p>
+            Describe what you want in plain language. <code>bai</code> returns a
+            proposed shell command, copies it to your clipboard, and leaves the
+            final decision to you. No auto-run. No chat sprawl. Just a fast path
+            from intent to command.
+          </p>
+
+          <div class="hero-actions">
+            <a class="button primary" href="#install">Install</a>
+            <a class="button secondary" href="./api/index.html">Learn</a>
+            <button class="button secondary" type="button" data-watch-demo>Watch</button>
+          </div>
+
+          <div class="hero-meta">
+            <div class="meta-card">
+              <strong>Scope</strong>
+              <span>single-shot CLI helper</span>
+            </div>
+            <div class="meta-card">
+              <strong>Safety</strong>
+              <span>you approve every command</span>
+            </div>
+            <div class="meta-card">
+              <strong>Providers</strong>
+              <span>Anthropic or OpenAI</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-demo" data-terminal data-default-script="default">
+          <div class="terminal">
+            <div class="terminal-bar">
+              <div class="lights"><i></i><i></i><i></i></div>
+              <span>~/Projects/bai</span>
+            </div>
+            <div class="terminal-output"></div>
+            <div class="clipboard">copied to clipboard, ready to paste or edit</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="grid">
+        <section class="section wide">
+          <h2>Small tool. Hard edge.</h2>
+          <p>
+            <code>bai</code> does one job: turn a natural-language shell request
+            into a command shaped for your environment. It includes lightweight
+            context such as shell, OS, and current directory so the output fits
+            your machine instead of a generic tutorial example.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature">
+              <strong>Command-first output</strong>
+              The default path prints the command to stdout and gets out of the way.
+            </div>
+            <div class="feature">
+              <strong>Config without shell-file clutter</strong>
+              Use environment variables or drop files in <code>~/.config/bai/</code>.
+            </div>
+            <div class="feature">
+              <strong>Composability</strong>
+              JSON mode, clipboard integration, shell overrides, and API docs all stay available without bloating the core UX.
+            </div>
+          </div>
+        </section>
+
+        <section class="section tall">
+          <h2>Built for real shells.</h2>
+          <p>
+            Use <code>--shell</code> when editor launchers or wrappers obscure the
+            parent process. Use <code>--strict</code> when guessing is the wrong
+            move. Use <code>--show-config</code> when you need to see exactly what
+            runtime state <code>bai</code> resolved.
+          </p>
+
+          <div class="mode-list">
+            <div class="mode">
+              <strong><code>--explain</code></strong>
+              Sends a short reason to stderr while keeping stdout pipeline-safe.
+            </div>
+            <div class="mode">
+              <strong><code>--json</code></strong>
+              Returns machine-readable output for wrappers, editors, and tooling.
+            </div>
+            <div class="mode">
+              <strong><code>prompt.md</code></strong>
+              Append your own command preferences without touching the source tree.
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="section" id="install" style="margin-top: 1.2rem;">
+        <h2>Install it the direct way.</h2>
+        <p>
+          Pull a release package if you just want the binary. Build from source if
+          you want to hack on it, read the Crystal code, or generate the API docs.
+          <a href="https://github.com/trans/bai/releases/latest">Releases are available on GitHub.</a>
+        </p>
+
+        <div class="install-grid">
+          <article class="install-card">
+            <h3>Arch Linux</h3>
+            <p>Download the <code>.pkg.tar.zst</code> asset from the latest release.</p>
+            <pre><code>sudo pacman -U ./bai-*.pkg.tar.zst</code></pre>
+          </article>
+
+          <article class="install-card">
+            <h3>Debian / Ubuntu</h3>
+            <p>Download the <code>.deb</code> asset, then install the package.</p>
+            <pre><code>sudo dpkg -i ./bai_*.deb
+sudo apt-get install -f</code></pre>
+          </article>
+
+          <article class="install-card">
+            <h3>From source</h3>
+            <p>Requires Crystal and <code>just</code>.</p>
+            <pre><code>git clone https://github.com/trans/bai
+cd bai
+just install</code></pre>
+          </article>
+        </div>
+
+        <div class="panels">
+          <article class="panel">
+            <h3>Try it fast</h3>
+            <pre class="snippet"><code>bai count lines of Crystal code in src
+bai find files modified in the last day
+bai show the largest 10 files under home</code></pre>
+          </article>
+
+          <article class="panel">
+            <h3>Config lives here</h3>
+            <pre class="snippet"><code>~/.config/bai/provider
+~/.config/bai/anthropic_api_key
+~/.config/bai/openai_api_key
+~/.config/bai/shell
+~/.config/bai/prompt.md</code></pre>
+          </article>
+        </div>
+
+        <div class="callout">
+          <div>
+            <strong>Need the internals?</strong>
+            Public Crystal docs are generated into <code>docs/api/</code> and ship with the site.
+          </div>
+          <a class="button primary" href="./api/">Open API docs</a>
+        </div>
+      </section>
+
+      <footer>
+        <span>bai: a small AI shell-command helper with a hard boundary.</span>
+        <span>MIT licensed · Crystal CLI · <a href="https://github.com/trans/bai">github.com/trans/bai</a></span>
+      </footer>
+    </main>
+    <script>
+      (() => {
+        const terminal = document.querySelector("[data-terminal]");
+        if (!terminal) return;
+
+        const output = terminal.querySelector(".terminal-output");
+        const watchButton = document.querySelector("[data-watch-demo]");
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        const terminalScripts = {
+          default: [
+            { type: "query", text: "$ bai show the largest 10 files under home", pause: 280 },
+            {
+              type: "response",
+              text: "find ~ -type f -printf '%s %p\\n' | sort -nr | head -10",
+              pause: 700,
+            },
+            {
+              type: "status",
+              text: "copied to clipboard, ready to paste or edit",
+              pause: 350,
+            },
+            { type: "blank", text: "", pause: 140 },
+            { type: "query", text: "$ bai --explain --shell fish rename all jpg files in this folder to lowercase", pause: 280 },
+            {
+              type: "response",
+              text: "for f in *.jpg; mv -- \"$f\" \"$(string lower -- \"$f\")\"; end",
+              pause: 420,
+            },
+            {
+              type: "muted-output",
+              text: "why: uses fish string lower and preserves filenames safely",
+              pause: 760,
+            },
+            {
+              type: "status",
+              text: "explain mode keeps the command on stdout and the reason on stderr",
+              pause: 350,
+            },
+            { type: "blank", text: "", pause: 140 },
+            { type: "query", text: "$ bai --json --strict find files modified today", pause: 280 },
+            {
+              type: "response",
+              text: "{\"command\":\"find . -type f -daystart -mtime -1\",\"explanation\":\"Searches from the current directory for files modified since the start of the last day window.\",\"provider\":\"openai\",\"shell\":\"bash\",\"strict\":true}",
+              pause: 900,
+            },
+            {
+              type: "status",
+              text: "json mode is ready for wrappers, editors, and shell integrations",
+              pause: 300,
+            },
+          ],
+        };
+
+        const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+        let runToken = 0;
+        const status = terminal.querySelector(".clipboard");
+
+        const setStatus = (text) => {
+          if (status) {
+            status.textContent = text;
+          }
+        };
+
+        const removeCursor = () => {
+          output.querySelectorAll(".terminal-cursor").forEach((cursor) => {
+            const line = cursor.parentElement;
+            if (line) line.remove();
+          });
+        };
+
+        const addCursorLine = () => {
+          removeCursor();
+          const line = document.createElement("div");
+          line.className = "terminal-line";
+          const cursor = document.createElement("span");
+          cursor.className = "terminal-cursor";
+          cursor.textContent = "█";
+          line.appendChild(cursor);
+          output.appendChild(line);
+        };
+
+        const clearOutput = () => {
+          output.innerHTML = "";
+        };
+
+        const appendLine = (text, type) => {
+          const line = document.createElement("div");
+          line.className = `terminal-line ${type}`;
+          line.textContent = text;
+          output.appendChild(line);
+        };
+
+        const typeLine = async (text, type, speed) => {
+          const line = document.createElement("div");
+          line.className = `terminal-line ${type}`;
+          output.appendChild(line);
+          if (!text.length) {
+            return;
+          }
+          for (let i = 0; i < text.length; i += 1) {
+            line.textContent += text[i];
+            await sleep(speed);
+          }
+        };
+
+        const runDemo = async (scriptKey = "default") => {
+          runToken += 1;
+          const token = runToken;
+          const script = terminalScripts[scriptKey] || terminalScripts.default;
+          terminal.dataset.played = "true";
+          clearOutput();
+          setStatus("copied to clipboard, ready to paste or edit");
+          if (watchButton) {
+            watchButton.textContent = "Watch";
+          }
+
+          if (prefersReducedMotion) {
+            script.forEach((step) => {
+              if (step.type === "status") {
+                setStatus(step.text);
+              } else {
+                appendLine(step.text, step.type);
+              }
+            });
+            addCursorLine();
+            if (watchButton) {
+              watchButton.textContent = "Watch Again";
+            }
+            return;
+          }
+
+          for (const step of script) {
+            if (token !== runToken) return;
+            if (step.type === "status") {
+              setStatus(step.text);
+              if (step.pause) {
+                await sleep(step.pause);
+              }
+              continue;
+            }
+            removeCursor();
+            const speed = step.type === "query" ? 16 : 8;
+            await typeLine(step.text, step.type, speed);
+            if (step.pause) {
+              await sleep(step.pause);
+            }
+            if (token !== runToken) return;
+            addCursorLine();
+          }
+
+          if (watchButton) {
+            watchButton.textContent = "Watch Again";
+          }
+        };
+
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting && !terminal.dataset.played) {
+                runDemo(terminal.dataset.defaultScript || "default");
+              }
+            });
+          },
+          { threshold: 0.45 }
+        );
+
+        observer.observe(terminal);
+
+        if (watchButton) {
+          watchButton.addEventListener("click", () => {
+            runDemo(terminal.dataset.defaultScript || "default");
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
