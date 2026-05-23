@@ -542,6 +542,10 @@
         padding: 1.4rem;
       }
 
+      .panel.panel-wide {
+        grid-column: 1 / -1;
+      }
+
       .callout {
         display: flex;
         flex-wrap: wrap;
@@ -584,6 +588,10 @@
         .panels,
         .hero-meta {
           grid-template-columns: 1fr;
+        }
+
+        .panel.panel-wide {
+          grid-column: auto;
         }
       }
 
@@ -787,6 +795,18 @@ bai show the largest 10 files under home</code></pre>
 ~/.config/bai/openai_api_key
 ~/.config/bai/shell
 ~/.config/bai/prompt.md</code></pre>
+          </article>
+
+          <article class="panel panel-wide">
+            <h3>Alt-Enter trick</h3>
+            <p>
+              Bind <code>bai</code> to Alt-Enter and rewrite your current prompt
+              buffer in place. Type the request, hit the keybinding, edit if
+              needed, then run it.
+            </p>
+            <pre class="snippet"><code>fish: bind \e\r bai-replace
+bash: bind -x '"\e\r": _bai_replace'
+zsh:  bindkey '^[^M' _bai_replace</code></pre>
           </article>
         </div>
 
