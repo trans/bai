@@ -42,6 +42,10 @@ If `dpkg` reports missing dependencies, finish with:
 sudo apt-get install -f
 ```
 
+## TODO
+
+- Make the provider layer flexible enough to support self-hosted or in-house LLM backends without bloating the default CLI UX.
+
 ### From source
 
 Requires [Crystal](https://crystal-lang.org/) and [just](https://just.systems/).
