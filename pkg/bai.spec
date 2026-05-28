@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 
 Name:           bai
-Version:        0.4.1
+Version:        0.4.2
 Release:        1%{?dist}
 Summary:        Translate natural-language shell requests into proposed commands
 
@@ -51,5 +51,8 @@ install -Dpm0644 LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE
 %{_bindir}/bai
 
 %changelog
+* Wed May 28 2026 Thomas Sawyer <transfire@gmail.com> - 0.4.2-1
+- Fedora packaging and CI validation fixes
+
 * Wed May 27 2026 Thomas Sawyer <transfire@gmail.com> - 0.4.1-1
 - Initial Fedora RPM packaging

@@ -1,3 +1,11 @@
+bai (0.4.2-1) unstable; urgency=medium
+
+  * Add Fedora RPM packaging support.
+  * Fix Fedora GitHub Actions packaging to use the official Crystal
+    repository and a spec compatible with release builds.
+
+ -- trans <transfire@gmail.com>  Wed, 28 May 2026 00:00:00 +0000
+
 bai (0.4.1-1) unstable; urgency=medium
 
   * Fix GitHub Actions packaging so Arch and Debian release assets build
