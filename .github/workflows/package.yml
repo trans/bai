@@ -99,15 +99,18 @@ jobs:
     runs-on: ubuntu-latest
     container: fedora:latest
     steps:
-      - name: Install git for checkout
-        run: dnf install -y git
+      - name: Install git and curl for checkout and Crystal setup
+        run: dnf install -y curl git
 
       - uses: actions/checkout@v5
 
-      - name: Install Crystal and RPM build dependencies
+      - name: Install Crystal from the official repository
+        run: curl -fsSL https://crystal-lang.org/install.sh | bash
+
+      - name: Install RPM build dependencies
         run: |
           dnf install -y \
-            brotli-devel crystal gc-devel gcc libzstd-devel \
+            brotli-devel gc-devel gcc libzstd-devel \
             openssl-devel pcre2-devel redhat-rpm-config rpm-build zlib-devel
 
       - name: Verify release version
