@@ -1,3 +1,5 @@
+%global debug_package %{nil}
+
 Name:           bai
 Version:        0.4.1
 Release:        1%{?dist}
@@ -49,5 +51,5 @@ install -Dpm0644 LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE
 %{_bindir}/bai
 
 %changelog
-* Tue May 27 2026 Thomas Sawyer <transfire@gmail.com> - 0.4.1-1
+* Wed May 27 2026 Thomas Sawyer <transfire@gmail.com> - 0.4.1-1
 - Initial Fedora RPM packaging
