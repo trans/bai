@@ -32,6 +32,15 @@ pkg-deb:
     cd "pkg/build/bai-{{version}}" && dpkg-buildpackage -us -uc -b
     mv pkg/build/*.deb pkg/build/*.buildinfo pkg/build/*.changes pkg/ 2>/dev/null || true
 
+pkg-rpm: pkg-src
+    rm -rf pkg/rpmbuild
+    mkdir -p pkg/rpmbuild/BUILD pkg/rpmbuild/BUILDROOT pkg/rpmbuild/RPMS pkg/rpmbuild/SOURCES pkg/rpmbuild/SPECS pkg/rpmbuild/SRPMS
+    cp "pkg/bai-{{version}}.tar.gz" pkg/rpmbuild/SOURCES/
+    cp pkg/bai.spec pkg/rpmbuild/SPECS/
+    rpmbuild --define "_topdir $PWD/pkg/rpmbuild" -ba pkg/rpmbuild/SPECS/bai.spec
+    find pkg/rpmbuild/RPMS -name '*.rpm' -exec cp {} pkg/ \;
+    find pkg/rpmbuild/SRPMS -name '*.src.rpm' -exec cp {} pkg/ \;
+
 release-check:
     crystal spec
     just pkg-src
@@ -50,7 +59,7 @@ uninstall:
     @echo "removed: {{bindir}}/bai"
 
 clean:
-    rm -rf bin lib .crystal docs/api pkg/build pkg/pkg pkg/src pkg/*.tar.gz pkg/*.deb pkg/*.buildinfo pkg/*.changes pkg/*.dsc pkg/*.build
+    rm -rf bin lib .crystal docs/api pkg/build pkg/pkg pkg/src pkg/rpmbuild pkg/*.tar.gz pkg/*.deb pkg/*.buildinfo pkg/*.changes pkg/*.dsc pkg/*.build pkg/*.rpm pkg/*.src.rpm
 
 fmt:
     crystal tool format

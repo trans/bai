@@ -42,6 +42,14 @@ If `dpkg` reports missing dependencies, finish with:
 sudo apt-get install -f
 ```
 
+### Fedora
+
+Download the `.rpm` asset from the latest GitHub release, then install:
+
+```sh
+sudo dnf install ./bai-*.rpm
+```
+
 ## TODO
 
 - Make the provider layer flexible enough to support self-hosted or in-house LLM backends without bloating the default CLI UX.
@@ -229,6 +237,16 @@ Avoid sudo unless the request clearly requires it.
 
 `bai --dry-run` will show your addendum in the rendered system prompt so
 you can verify it's loading.
+
+## Packaging
+
+Local package build helpers:
+
+```sh
+just pkg-arch
+just pkg-deb
+just pkg-rpm
+```
 
 ## Strict and explain modes
 

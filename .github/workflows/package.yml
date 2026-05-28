@@ -94,10 +94,54 @@ jobs:
           name: bai-deb
           path: dist/*
 
+  fedora:
+    name: Fedora Package
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    steps:
+      - name: Install git for checkout
+        run: dnf install -y git
+
+      - uses: actions/checkout@v5
+
+      - name: Install Crystal and RPM build dependencies
+        run: |
+          dnf install -y \
+            brotli-devel crystal gc-devel gcc libzstd-devel \
+            openssl-devel pcre2-devel redhat-rpm-config rpm-build zlib-devel
+
+      - name: Verify release version
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          version="$(sed -n 's/^version: //p' shard.yml)"
+          if [ "${{ github.event_name }}" = "release" ] && [ "$TAG_NAME" != "v$version" ]; then
+            echo "tag $TAG_NAME does not match shard.yml version v$version"
+            exit 1
+          fi
+
+      - name: Build Fedora package
+        run: |
+          version="$(sed -n 's/^version: //p' shard.yml)"
+          mkdir -p dist pkg/rpmbuild/BUILD pkg/rpmbuild/BUILDROOT pkg/rpmbuild/RPMS pkg/rpmbuild/SOURCES pkg/rpmbuild/SPECS pkg/rpmbuild/SRPMS
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git -C "$GITHUB_WORKSPACE" ls-files -z | tar --null -T - \
+            --transform "s,^,bai-${version}/," \
+            -czf "pkg/rpmbuild/SOURCES/bai-${version}.tar.gz"
+          cp pkg/bai.spec pkg/rpmbuild/SPECS/
+          rpmbuild --define "_topdir $GITHUB_WORKSPACE/pkg/rpmbuild" -ba "$GITHUB_WORKSPACE/pkg/rpmbuild/SPECS/bai.spec"
+          find pkg/rpmbuild/RPMS -name '*.rpm' -exec cp {} dist/ \;
+
+      - name: Upload Fedora artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: bai-rpm
+          path: dist/*
+
   release-assets:
     name: Upload Release Assets
     if: github.event_name == 'release'
-    needs: [arch, deb]
+    needs: [arch, deb, fedora]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -111,3 +155,4 @@ jobs:
           files: |
             bai-arch/*.pkg.tar.zst
             bai-deb/*.deb
+            bai-rpm/*.rpm

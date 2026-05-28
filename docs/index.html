@@ -506,7 +506,7 @@
 
       .install-grid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 1rem;
         margin-top: 1rem;
       }
@@ -770,6 +770,12 @@
             <p>Download the <code>.deb</code> asset, then install the package.</p>
             <pre><code>sudo dpkg -i ./bai_*.deb
 sudo apt-get install -f</code></pre>
+          </article>
+
+          <article class="install-card">
+            <h3>Fedora</h3>
+            <p>Download the <code>.rpm</code> asset, then install it with DNF.</p>
+            <pre><code>sudo dnf install ./bai-*.rpm</code></pre>
           </article>
 
           <article class="install-card">
