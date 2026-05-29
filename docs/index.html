@@ -27,7 +27,7 @@
         --accent-soft: rgba(184, 72, 38, 0.12);
         --olive: #556b2f;
         --card: rgba(255, 250, 241, 0.84);
-        --shadow: 0 24px 80px rgba(69, 37, 25, 0.16);
+        --shadow: 0 18px 46px rgba(69, 37, 25, 0.14);
         --radius: 28px;
         --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
         --serif: "Fraunces", "Iowan Old Style", "Palatino Linotype", serif;
@@ -66,56 +66,6 @@
 
       a {
         color: inherit;
-      }
-
-      .shell-noise {
-        position: fixed;
-        inset: 0;
-        overflow: hidden;
-        pointer-events: none;
-      }
-
-      .shell-noise span {
-        position: absolute;
-        color: rgba(141, 47, 22, 0.12);
-        font-size: 0.78rem;
-        animation: drift 18s linear infinite;
-        white-space: nowrap;
-      }
-
-      .shell-noise span:nth-child(1) {
-        top: 11%;
-        left: 8%;
-        animation-delay: -2s;
-      }
-
-      .shell-noise span:nth-child(2) {
-        top: 26%;
-        right: 7%;
-        animation-delay: -8s;
-      }
-
-      .shell-noise span:nth-child(3) {
-        bottom: 25%;
-        left: 10%;
-        animation-delay: -11s;
-      }
-
-      .shell-noise span:nth-child(4) {
-        bottom: 12%;
-        right: 12%;
-        animation-delay: -5s;
-      }
-
-      @keyframes drift {
-        0%,
-        100% {
-          transform: translate3d(0, 0, 0);
-        }
-
-        50% {
-          transform: translate3d(0, -14px, 0);
-        }
       }
 
       @keyframes rise {
@@ -198,7 +148,6 @@
       .chip {
         padding: 0.72rem 1rem;
         background: rgba(255, 250, 241, 0.56);
-        backdrop-filter: blur(10px);
       }
 
       .button {
@@ -246,7 +195,6 @@
         border: 1px solid var(--line);
         border-radius: var(--radius);
         background: var(--card);
-        backdrop-filter: blur(12px);
         box-shadow: var(--shadow);
       }
 
@@ -625,16 +573,23 @@
           padding: 1.15rem;
         }
       }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        *,
+        *::before,
+        *::after {
+          animation-duration: 1ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 1ms !important;
+        }
+      }
     </style>
   </head>
   <body>
-    <div class="shell-noise" aria-hidden="true">
-      <span>$ bai find largest folders in ~/Projects</span>
-      <span>$ bai --strict rename jpg files to lowercase</span>
-      <span>$ bai count lines of Crystal code in src</span>
-      <span>$ bai --shell fish list files modified today</span>
-    </div>
-
     <main class="page">
       <header class="topbar">
         <a class="brand" href="./">
@@ -773,9 +728,10 @@ sudo apt-get install -f</code></pre>
           </article>
 
           <article class="install-card">
-            <h3>Fedora</h3>
-            <p>Download the <code>.rpm</code> asset, then install it with DNF.</p>
-            <pre><code>sudo dnf install ./bai-*.rpm</code></pre>
+            <h3>Fedora / RPM</h3>
+            <p>Download the <code>.rpm</code> asset. Use DNF on Fedora, or allow the unsigned local package on openSUSE.</p>
+            <pre><code>sudo dnf install ./bai-*.rpm
+sudo zypper install --allow-unsigned-rpm ./bai-*.rpm</code></pre>
           </article>
 
           <article class="install-card">

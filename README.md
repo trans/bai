@@ -42,12 +42,18 @@ If `dpkg` reports missing dependencies, finish with:
 sudo apt-get install -f
 ```
 
-### Fedora
+### Fedora / RPM
 
 Download the `.rpm` asset from the latest GitHub release, then install:
 
 ```sh
 sudo dnf install ./bai-*.rpm
+```
+
+On openSUSE, local unsigned RPMs need an explicit allowance:
+
+```sh
+sudo zypper install --allow-unsigned-rpm ./bai-*.rpm
 ```
 
 ## TODO
