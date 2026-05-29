@@ -536,6 +536,10 @@
         line-height: 1.7;
       }
 
+      .ai-note p + p {
+        margin-top: 0.75rem;
+      }
+
       footer {
         display: flex;
         flex-wrap: wrap;
@@ -813,6 +817,12 @@ zsh:  bindkey '^[^M' _bai_replace</code></pre>
           <code>bai</code> uses AI as a command-generation assistant, not as an
           operator. It proposes one command, shows it to you, and leaves review,
           editing, and execution in human hands.
+        </p>
+        <p>
+          <code>bai</code> was vibe coded, but it is intentionally small, with a
+          narrow surface area and tests around the user-facing behavior. Any bugs
+          are my responsibility: design, review, and release judgment still live
+          on the human side of the equation.
         </p>
       </section>
 
