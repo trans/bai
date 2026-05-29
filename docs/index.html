@@ -16,18 +16,18 @@
     />
     <style>
       :root {
-        color-scheme: light;
-        --paper: #f5efe4;
-        --paper-strong: #fffaf1;
-        --ink: #1e1a17;
-        --muted: #655b50;
-        --line: rgba(30, 26, 23, 0.12);
-        --accent: #b84826;
-        --accent-strong: #8d2f16;
-        --accent-soft: rgba(184, 72, 38, 0.12);
-        --olive: #556b2f;
-        --card: rgba(255, 250, 241, 0.84);
-        --shadow: 0 18px 46px rgba(69, 37, 25, 0.14);
+        color-scheme: dark;
+        --paper: #08120f;
+        --paper-strong: #101c17;
+        --ink: #e7f7df;
+        --muted: #aec4b6;
+        --line: rgba(151, 255, 187, 0.16);
+        --accent: #70ff9b;
+        --accent-strong: #ffcc66;
+        --accent-soft: rgba(112, 255, 155, 0.12);
+        --olive: #b8ff6a;
+        --card: rgba(11, 25, 20, 0.9);
+        --shadow: 0 22px 58px rgba(0, 0, 0, 0.42);
         --radius: 28px;
         --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
         --serif: "Fraunces", "Iowan Old Style", "Palatino Linotype", serif;
@@ -47,9 +47,9 @@
         color: var(--ink);
         font-family: var(--mono);
         background:
-          radial-gradient(circle at top left, rgba(184, 72, 38, 0.16), transparent 30%),
-          radial-gradient(circle at 85% 12%, rgba(85, 107, 47, 0.18), transparent 22%),
-          linear-gradient(180deg, #f9f2e5 0%, #efe5d5 100%);
+          radial-gradient(circle at top left, rgba(112, 255, 155, 0.14), transparent 30%),
+          radial-gradient(circle at 82% 10%, rgba(199, 230, 107, 0.12), transparent 24%),
+          linear-gradient(180deg, #050908 0%, #0a1511 52%, #07100d 100%);
       }
 
       body::before {
@@ -57,10 +57,10 @@
         position: fixed;
         inset: 0;
         pointer-events: none;
-        opacity: 0.38;
+        opacity: 0.5;
         background-image:
-          linear-gradient(rgba(30, 26, 23, 0.03) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(30, 26, 23, 0.03) 1px, transparent 1px);
+          linear-gradient(rgba(112, 255, 155, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(112, 255, 155, 0.035) 1px, transparent 1px);
         background-size: 32px 32px;
       }
 
@@ -108,8 +108,10 @@
         display: grid;
         place-items: center;
         border-radius: 18px;
-        background: var(--ink);
-        color: var(--paper-strong);
+        background: #07100d;
+        color: var(--accent);
+        border: 1px solid rgba(112, 255, 155, 0.35);
+        box-shadow: inset 0 0 18px rgba(112, 255, 155, 0.12);
         font-weight: 600;
       }
 
@@ -147,7 +149,7 @@
 
       .chip {
         padding: 0.72rem 1rem;
-        background: rgba(255, 250, 241, 0.56);
+        background: rgba(9, 21, 17, 0.76);
       }
 
       .button {
@@ -157,27 +159,27 @@
         gap: 0.6rem;
         padding: 0.95rem 1.3rem;
         background: var(--paper-strong);
-        box-shadow: 0 10px 24px rgba(30, 26, 23, 0.08);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
         font: inherit;
         color: inherit;
         cursor: pointer;
       }
 
       .button.primary {
-        background: var(--ink);
+        background: var(--accent);
         border-color: transparent;
-        color: var(--paper-strong);
+        color: #06100c;
       }
 
       .button.secondary {
-        background: rgba(255, 250, 241, 0.72);
+        background: rgba(10, 25, 20, 0.88);
       }
 
       .chip:hover,
       .button:hover,
       .button:focus-visible {
         transform: translateY(-1px);
-        border-color: rgba(30, 26, 23, 0.28);
+        border-color: rgba(112, 255, 155, 0.45);
       }
 
       .hero {
@@ -223,7 +225,7 @@
         margin: 0;
         font-size: clamp(3rem, 8vw, 6.4rem);
         line-height: 0.97;
-        letter-spacing: -0.035em;
+        letter-spacing: 0;
         word-spacing: 0.06em;
       }
 
@@ -254,8 +256,8 @@
       .meta-card {
         padding: 1rem;
         border-radius: 20px;
-        background: rgba(255, 255, 255, 0.38);
-        border: 1px solid rgba(30, 26, 23, 0.08);
+        background: rgba(4, 13, 10, 0.58);
+        border: 1px solid rgba(112, 255, 155, 0.12);
       }
 
       .meta-card strong {
@@ -281,7 +283,7 @@
         inset: auto -10% -18% 24%;
         height: 42%;
         border-radius: 999px;
-        background: radial-gradient(circle, rgba(184, 72, 38, 0.18), transparent 64%);
+        background: radial-gradient(circle, rgba(112, 255, 155, 0.12), transparent 64%);
         pointer-events: none;
       }
 
@@ -293,9 +295,10 @@
         flex-direction: column;
         padding: 1rem 1rem 1.1rem;
         border-radius: 24px;
-        background: #1d1815;
-        color: #f7efe3;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        background: #030806;
+        color: #e7f7df;
+        border: 1px solid rgba(112, 255, 155, 0.18);
+        box-shadow: inset 0 1px 0 rgba(112, 255, 155, 0.12);
       }
 
       .terminal-bar {
@@ -303,7 +306,7 @@
         align-items: center;
         justify-content: space-between;
         margin-bottom: 1rem;
-        color: rgba(247, 239, 227, 0.75);
+        color: rgba(231, 247, 223, 0.72);
         font-size: 0.8rem;
       }
 
@@ -317,7 +320,7 @@
         width: 0.7rem;
         height: 0.7rem;
         border-radius: 999px;
-        background: rgba(247, 239, 227, 0.24);
+        background: rgba(112, 255, 155, 0.24);
       }
 
       .terminal pre {
@@ -345,19 +348,19 @@
       }
 
       .prompt {
-        color: #f4a261;
+        color: #b8ff6a;
       }
 
       .query {
-        color: #f7efe3;
+        color: #e7f7df;
       }
 
       .response {
-        color: #9fd3a7;
+        color: #70ff9b;
       }
 
       .muted-output {
-        color: #c9c0b6;
+        color: #9db7a6;
       }
 
       .blank {
@@ -366,7 +369,7 @@
 
       .terminal-cursor {
         display: inline-block;
-        color: #f4a261;
+        color: #b8ff6a;
         animation: blink 1s steps(1, end) infinite;
       }
 
@@ -388,8 +391,8 @@
         min-height: 3rem;
         padding: 1.2rem 0.85rem 0.65rem;
         border-radius: 14px;
-        background: rgba(159, 211, 167, 0.12);
-        color: #9fd3a7;
+        background: rgba(112, 255, 155, 0.1);
+        color: #70ff9b;
         font-size: 0.82rem;
       }
 
@@ -408,7 +411,7 @@
       .panel h3 {
         margin: 0 0 0.8rem;
         line-height: 1;
-        letter-spacing: -0.03em;
+        letter-spacing: 0;
       }
 
       .section h2 {
@@ -443,7 +446,7 @@
         padding: 1rem 1rem 1rem 1.1rem;
         border-left: 4px solid var(--accent);
         border-radius: 18px;
-        background: rgba(255, 255, 255, 0.34);
+        background: rgba(4, 13, 10, 0.58);
       }
 
       .feature strong,
@@ -474,8 +477,9 @@
         overflow-x: auto;
         padding: 1rem;
         border-radius: 18px;
-        background: rgba(30, 26, 23, 0.94);
-        color: #f7efe3;
+        background: rgba(3, 8, 6, 0.98);
+        color: #e7f7df;
+        border: 1px solid rgba(112, 255, 155, 0.13);
         font-size: 0.88rem;
       }
 
@@ -503,12 +507,33 @@
         margin-top: 1.2rem;
         padding: 1.2rem 1.3rem;
         border-radius: 24px;
-        background: linear-gradient(135deg, rgba(85, 107, 47, 0.16), rgba(184, 72, 38, 0.14));
+        background: linear-gradient(135deg, rgba(112, 255, 155, 0.12), rgba(184, 255, 106, 0.08));
       }
 
       .callout strong {
         display: block;
         margin-bottom: 0.25rem;
+      }
+
+      .ai-note {
+        margin-top: 1.2rem;
+        padding: 1.2rem 1.3rem;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: rgba(3, 8, 6, 0.72);
+      }
+
+      .ai-note strong {
+        display: block;
+        margin-bottom: 0.35rem;
+        color: var(--accent-strong);
+      }
+
+      .ai-note p {
+        max-width: 64rem;
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.7;
       }
 
       footer {
@@ -780,6 +805,15 @@ zsh:  bindkey '^[^M' _bai_replace</code></pre>
           </div>
           <a class="button primary" href="./api/">Open API docs</a>
         </div>
+      </section>
+
+      <section class="ai-note" aria-labelledby="ai-note-title">
+        <strong id="ai-note-title">About AI and vibe coding</strong>
+        <p>
+          <code>bai</code> uses AI as a command-generation assistant, not as an
+          operator. It proposes one command, shows it to you, and leaves review,
+          editing, and execution in human hands.
+        </p>
       </section>
 
       <footer>
