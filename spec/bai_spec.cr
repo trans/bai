@@ -66,22 +66,24 @@ describe Bai do
   it "prints effective config without requiring a query" do
     BaiSpecSupport.with_env("BAI_PROVIDER", nil) do
       BaiSpecSupport.with_env("ANTHROPIC_API_KEY", nil) do
-        BaiSpecSupport.with_config({
-          "provider"           => "openai",
-          "openai_api_key"     => "sk-openai-test-1234",
-          "anthropic_api_key"  => "sk-ant-test-5678",
-          "shell"              => "zsh",
-        }) do
-          stdout = IO::Memory.new
-          stderr = IO::Memory.new
+        BaiSpecSupport.with_env("OPENAI_API_KEY", nil) do
+          BaiSpecSupport.with_config({
+            "provider"           => "openai",
+            "openai_api_key"     => "sk-openai-test-1234",
+            "anthropic_api_key"  => "sk-ant-test-5678",
+            "shell"              => "zsh",
+          }) do
+            stdout = IO::Memory.new
+            stderr = IO::Memory.new
 
-          Bai.run(["--show-config"], stdout: stdout, stderr: stderr).should eq(0)
+            Bai.run(["--show-config"], stdout: stdout, stderr: stderr).should eq(0)
 
-          stdout.to_s.should contain("provider: openai")
-          stdout.to_s.should contain("shell: zsh")
-          stdout.to_s.should contain("anthropic_api_key: sk-a...5678")
-          stdout.to_s.should contain("openai_api_key: sk-o...1234")
-          stderr.to_s.should eq("")
+            stdout.to_s.should contain("provider: openai")
+            stdout.to_s.should contain("shell: zsh")
+            stdout.to_s.should contain("anthropic_api_key: sk-a...5678")
+            stdout.to_s.should contain("openai_api_key: sk-o...1234")
+            stderr.to_s.should eq("")
+          end
         end
       end
     end

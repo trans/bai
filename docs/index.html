@@ -466,6 +466,10 @@
         padding: 1.3rem;
       }
 
+      .install-card.wide-card {
+        grid-column: 1 / -1;
+      }
+
       .install-card h3 {
         margin: 0 0 0.6rem;
         font-size: 1rem;
@@ -764,6 +768,13 @@ sudo zypper install --allow-unsigned-rpm ./bai-*.rpm</code></pre>
           </article>
 
           <article class="install-card">
+            <h3>macOS</h3>
+            <p>Install from the Homebrew tap. Clipboard copy uses built-in <code>pbcopy</code>.</p>
+            <pre><code>brew tap trans/tap
+brew install bai</code></pre>
+          </article>
+
+          <article class="install-card wide-card">
             <h3>From source</h3>
             <p>Requires Crystal and <code>just</code>.</p>
             <pre><code>git clone https://github.com/trans/bai

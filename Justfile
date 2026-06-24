@@ -1,6 +1,7 @@
 prefix := env_var_or_default("PREFIX", "/usr/local")
 bindir := prefix / "bin"
 version := `sed -n 's/^version: //p' shard.yml`
+homebrew_tap := env_var_or_default("HOMEBREW_TAP", "../homebrew-tap")
 
 default:
     @just --list
@@ -40,6 +41,11 @@ pkg-rpm: pkg-src
     rpmbuild --define "_topdir $PWD/pkg/rpmbuild" -ba pkg/rpmbuild/SPECS/bai.spec
     find pkg/rpmbuild/RPMS -name '*.rpm' -exec cp {} pkg/ \;
     find pkg/rpmbuild/SRPMS -name '*.src.rpm' -exec cp {} pkg/ \;
+
+sync-homebrew-tap:
+    mkdir -p "{{homebrew_tap}}/Formula"
+    cp pkg/homebrew/bai.rb "{{homebrew_tap}}/Formula/bai.rb"
+    @echo "synced: {{homebrew_tap}}/Formula/bai.rb"
 
 release-check:
     crystal spec

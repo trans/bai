@@ -56,11 +56,31 @@ On openSUSE, local unsigned RPMs need an explicit allowance:
 sudo zypper install --allow-unsigned-rpm ./bai-*.rpm
 ```
 
+### macOS
+
+Install from the tap:
+
+```sh
+brew tap trans/tap
+brew install bai
+```
+
+Or build from source with Homebrew-provided Crystal and `just`:
+
+```sh
+brew install crystal just
+git clone https://github.com/trans/bai
+cd bai
+just install
+```
+
+Clipboard copy uses the built-in `pbcopy` command on macOS.
+
 ## TODO
 
 - Make the provider layer flexible enough to support self-hosted or in-house LLM backends without bloating the default CLI UX.
 
-### From source
+### From Source
 
 Requires [Crystal](https://crystal-lang.org/) and [just](https://just.systems/).
 
@@ -308,6 +328,8 @@ just docs-api    # generate HTML API docs at docs/api
 just pkg-src     # snapshot tracked files into pkg/bai-<version>.tar.gz
 just pkg-arch    # build an Arch package in pkg/
 just pkg-deb     # build Debian package artifacts in pkg/
+just pkg-rpm     # build Fedora/RPM package artifacts in pkg/
+just sync-homebrew-tap # copy pkg/homebrew/bai.rb into ../homebrew-tap
 just release-check # run spec + package checks before tagging a release
 just run -- <query>
 just test

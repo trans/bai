@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+
+      - name: Run specs
+        run: crystal spec
+
+      - name: Build executable
+        run: |
+          mkdir -p bin
+          crystal build src/main.cr -o bin/bai
+
+      - name: Smoke test CLI
+        run: |
+          ./bin/bai --version
+          ./bin/bai --show-config --no-copy
