@@ -91,6 +91,8 @@ Then either export an API key:
 
 ```sh
 export ANTHROPIC_API_KEY=sk-ant-...
+# or:
+export OPENAI_API_KEY=sk-...
 ```
 
 Or drop it into your config directory:

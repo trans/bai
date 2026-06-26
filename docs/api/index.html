@@ -154,7 +154,9 @@ cd bai
 just install                 # → /usr/local/bin/bai
 PREFIX=~/.local just install # → ~/.local/bin/bai</code></pre>
 <p>Then either export an API key:</p>
-<pre><code class="language-sh">export ANTHROPIC_API_KEY=sk-ant-...</code></pre>
+<pre><code class="language-sh">export ANTHROPIC_API_KEY=sk-ant-...
+# or:
+export OPENAI_API_KEY=sk-...</code></pre>
 <p>Or drop it into your config directory:</p>
 <pre><code class="language-sh">mkdir -p ~/.config/bai
 printf '%s\n' 'sk-ant-...' &gt; ~/.config/bai/anthropic_api_key</code></pre>
