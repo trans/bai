@@ -1,13 +1,15 @@
 require "http/client"
 require "json"
 require "option_parser"
-require "./bai/anthropic_client"
 require "./bai/clipboard"
 require "./bai/config"
+require "./bai/api_config"
+require "./bai/anthropic_client"
 require "./bai/model_output"
+require "./bai/openai_chat_client"
+require "./bai/openai_client"
 require "./bai/prompt"
 require "./bai/provider"
-require "./bai/openai_client"
 require "./bai/system_context"
 require "./bai/types"
 
@@ -17,11 +19,7 @@ module Bai
   VERSION = "0.4.3"
 
   # :nodoc:
-  API_URL    = "https://api.anthropic.com/v1/messages"
-  # :nodoc:
-  API_VER    = "2023-06-01"
-  # :nodoc:
-  MODEL      = Config.value("BAI_ANTHROPIC_MODEL", legacy: "BAI_MODEL") || "claude-haiku-4-5-20251001"
+  API_VER = "2023-06-01"
   # :nodoc:
   MAX_TOKENS = 512
 
@@ -38,7 +36,7 @@ module Bai
     stderr : IO = STDERR,
     stdin_tty : Bool = STDIN.tty?,
     command_requester : Proc(String, RequestOptions, GenerationResult)? = nil,
-    clipboard_copier : Proc(String, Bool)? = nil
+    clipboard_copier : Proc(String, Bool)? = nil,
   ) : Int32
     show_help = false
     show_version = false
@@ -137,12 +135,13 @@ module Bai
     output.puts
     output.puts "Env vars:"
     output.puts "  Env vars override matching files in #{Config.dir || "~/.config/bai"}."
-    output.puts "  BAI_PROVIDER         Command model backend: anthropic or openai (default: anthropic)."
-    output.puts "  ANTHROPIC_API_KEY    Required when BAI_PROVIDER=anthropic."
-    output.puts "  OPENAI_API_KEY       Required when BAI_PROVIDER=openai."
-    output.puts "  BAI_ANTHROPIC_MODEL  Override Anthropic model (preferred; legacy alias: BAI_MODEL)."
-    output.puts "  BAI_MODEL            Legacy alias for BAI_ANTHROPIC_MODEL."
-    output.puts "  BAI_OPENAI_MODEL     Override OpenAI model (default: #{OpenAIClient::MODEL})."
+    output.puts "  BAI_PROVIDER         Provider defaults: anthropic, openai, or local (default: anthropic)."
+    output.puts "  BAI_API_TYPE         Wire API: anthropic, openai_responses, or openai_chat."
+    output.puts "  BAI_BASE_URL         API base URL (provider-specific default when unset)."
+    output.puts "  BAI_API_KEY          API key (falls back to ANTHROPIC_API_KEY or OPENAI_API_KEY)."
+    output.puts "  BAI_MODEL            Model name for the selected provider/API."
+    output.puts "  ANTHROPIC_API_KEY    Fallback key when BAI_PROVIDER=anthropic."
+    output.puts "  OPENAI_API_KEY       Fallback key when BAI_PROVIDER=openai."
     output.puts "  BAI_SHELL            Override detected shell context."
     output.puts "  BAI_CLIPBOARD        Set to 0/off/false/no to disable clipboard."
     output.puts "  BAI_PROMPT_FILE      Override prompt addendum path (default: #{Prompt.default_addendum_path || "~/.config/bai/prompt.md"})."
@@ -150,17 +149,18 @@ module Bai
 
   private def self.print_config(output : IO, shell_override : String?)
     shell = SystemContext.shell_name(shell_override)
+    config = ApiConfig.resolve
 
     output.puts "version: #{VERSION}"
     output.puts "config_dir: #{Config.dir || "unset"}"
-    output.puts "provider: #{Provider.current}"
+    output.puts "provider: #{config.provider}"
+    output.puts "api_type: #{config.api_type}"
+    output.puts "base_url: #{config.base_url}"
+    output.puts "model: #{config.model}"
+    output.puts "api_key: #{redacted(config.api_key)}"
     output.puts "shell: #{shell}"
-    output.puts "anthropic_model: #{MODEL}"
-    output.puts "openai_model: #{OpenAIClient::MODEL}"
     output.puts "clipboard_enabled: #{Clipboard.enabled?(nil)}"
     output.puts "prompt_file: #{Prompt.effective_addendum_path || "unset"}"
-    output.puts "anthropic_api_key: #{redacted(Bai::Config.value("ANTHROPIC_API_KEY"))}"
-    output.puts "openai_api_key: #{redacted(Bai::Config.value("OPENAI_API_KEY"))}"
   end
 
   private def self.print_failure(stdout : IO, stderr : IO, result : GenerationResult, options : RequestOptions)
@@ -172,7 +172,11 @@ module Bai
   end
 
   private def self.print_dry_run(query : String, output : IO, options : RequestOptions)
-    output.puts "model: #{MODEL}"
+    config = ApiConfig.resolve
+
+    output.puts "provider: #{config.provider}"
+    output.puts "api_type: #{config.api_type}"
+    output.puts "model: #{config.model}"
     output.puts
     output.puts "--- system ---"
     output.puts Prompt.system(options)

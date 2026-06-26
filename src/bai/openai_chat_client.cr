@@ -1,20 +1,21 @@
 # :nodoc:
-module Bai::AnthropicClient
+module Bai::OpenAIChatClient
   def self.request_command(config : Bai::ApiConfig, query : String, options : Bai::RequestOptions) : Bai::GenerationResult
     body = {
-      model:      config.model,
-      max_tokens: Bai::MAX_TOKENS,
-      system:     Bai::Prompt.system(options),
-      messages:   [{role: "user", content: Bai::Prompt.user_message(query, options.shell_override)}],
+      model:       config.model,
+      temperature: 0,
+      messages:    [
+        {role: "system", content: Bai::Prompt.system(options)},
+        {role: "user", content: Bai::Prompt.user_message(query, options.shell_override)},
+      ],
     }.to_json
 
     headers = HTTP::Headers{
-      "x-api-key"         => config.api_key!,
-      "anthropic-version" => Bai::API_VER,
-      "content-type"      => "application/json",
+      "authorization" => "Bearer #{config.api_key!}",
+      "content-type"  => "application/json",
     }
 
-    resp = HTTP::Client.post(config.endpoint("/v1/messages"), headers: headers, body: body)
+    resp = HTTP::Client.post(config.endpoint("/v1/chat/completions"), headers: headers, body: body)
     unless resp.success?
       raise "API error #{resp.status_code}: #{resp.body}"
     end
@@ -28,21 +29,21 @@ module Bai::AnthropicClient
 
   def self.extract_result(response_body : String, options : Bai::RequestOptions) : Bai::GenerationResult
     json = JSON.parse(response_body)
-    blocks = json["content"]?.try(&.as_a?) || raise "API response missing content array"
+    choices = json["choices"]?.try(&.as_a?) || raise "API response missing choices array"
 
-    blocks.each do |block|
-      next unless block_hash = block.as_h?
+    choices.each do |choice|
+      next unless choice_hash = choice.as_h?
+      message = choice_hash["message"]?.try(&.as_h?)
+      next unless message
 
-      type = block_hash["type"]?.try(&.as_s?)
-      text = block_hash["text"]?.try(&.as_s?)
+      text = message["content"]?.try(&.as_s?)
       next unless text
-      next unless type.nil? || type == "text"
 
       result = Bai::ModelOutput.parse(text, options)
       return result unless result.command.empty? && result.explanation.nil?
     end
 
-    raise "API response contained no usable text content"
+    raise "API response contained no usable message content"
   rescue ex : JSON::ParseException
     raise "API response was not valid JSON: #{ex.message}"
   end

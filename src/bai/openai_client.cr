@@ -1,21 +1,18 @@
 # :nodoc:
 module Bai::OpenAIClient
-  API_URL = "https://api.openai.com/v1/responses"
-  MODEL   = Bai::Config.value("BAI_OPENAI_MODEL") || "gpt-5-mini"
-
-  def self.request_command(api_key : String, query : String, options : Bai::RequestOptions) : Bai::GenerationResult
+  def self.request_command(config : Bai::ApiConfig, query : String, options : Bai::RequestOptions) : Bai::GenerationResult
     body = {
-      model:        MODEL,
+      model:        config.model,
       instructions: Bai::Prompt.system(options),
       input:        Bai::Prompt.user_message(query, options.shell_override),
     }.to_json
 
     headers = HTTP::Headers{
-      "authorization" => "Bearer #{api_key}",
+      "authorization" => "Bearer #{config.api_key!}",
       "content-type"  => "application/json",
     }
 
-    resp = HTTP::Client.post(API_URL, headers: headers, body: body)
+    resp = HTTP::Client.post(config.endpoint("/v1/responses"), headers: headers, body: body)
     unless resp.success?
       raise "API error #{resp.status_code}: #{resp.body}"
     end

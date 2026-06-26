@@ -76,10 +76,6 @@ just install
 
 Clipboard copy uses the built-in `pbcopy` command on macOS.
 
-## TODO
-
-- Make the provider layer flexible enough to support self-hosted or in-house LLM backends without bloating the default CLI UX.
-
 ### From Source
 
 Requires [Crystal](https://crystal-lang.org/) and [just](https://just.systems/).
@@ -91,7 +87,7 @@ just install                 # → /usr/local/bin/bai
 PREFIX=~/.local just install # → ~/.local/bin/bai
 ```
 
-Then either export your Anthropic API key:
+Then either export an API key:
 
 ```sh
 export ANTHROPIC_API_KEY=sk-ant-...
@@ -102,6 +98,15 @@ Or drop it into your config directory:
 ```sh
 mkdir -p ~/.config/bai
 printf '%s\n' 'sk-ant-...' > ~/.config/bai/anthropic_api_key
+```
+
+For OpenAI-compatible local servers such as Ollama, set the provider, base URL,
+and model explicitly:
+
+```sh
+export BAI_PROVIDER=local
+export BAI_BASE_URL=http://localhost:11434/v1
+export BAI_MODEL=qwen2.5-coder:7b
 ```
 
 ## Usage
@@ -139,17 +144,26 @@ content is ready to paste cleanly) and exits.
 
 ### Environment variables
 
-| Variable             | Purpose                                                                |
-| -------------------- | ---------------------------------------------------------------------- |
-| `BAI_PROVIDER`       | Select provider: `anthropic` or `openai` (default: `anthropic`).       |
-| `ANTHROPIC_API_KEY`  | Required when `BAI_PROVIDER=anthropic`.                                |
-| `OPENAI_API_KEY`     | Required when `BAI_PROVIDER=openai`.                                   |
-| `BAI_ANTHROPIC_MODEL`| Preferred Anthropic model override (`claude-haiku-4-5-20251001`).      |
-| `BAI_MODEL`          | Legacy alias for `BAI_ANTHROPIC_MODEL`.                                |
-| `BAI_OPENAI_MODEL`   | OpenAI model override (default: `gpt-5-mini`).                         |
-| `BAI_SHELL`          | Override detected shell context (`fish`, `bash`, `zsh`, `nu`, etc.).  |
-| `BAI_CLIPBOARD`      | Set to `0`/`off`/`false`/`no` to disable clipboard copy by default.    |
-| `BAI_PROMPT_FILE`    | Override the prompt addendum path (default: `~/.config/bai/prompt.md`).|
+| Variable            | Purpose                                                                 |
+| ------------------- | ----------------------------------------------------------------------- |
+| `BAI_PROVIDER`      | Select provider defaults: `anthropic`, `openai`, or `local`.            |
+| `BAI_API_TYPE`      | Wire API override: `anthropic`, `openai_responses`, or `openai_chat`.   |
+| `BAI_BASE_URL`      | API base URL; provider defaults are used when unset.                    |
+| `BAI_API_KEY`       | API key override for the selected provider.                             |
+| `BAI_MODEL`         | Model name for the selected provider/API.                               |
+| `ANTHROPIC_API_KEY` | Fallback key when `BAI_PROVIDER=anthropic`.                             |
+| `OPENAI_API_KEY`    | Fallback key when `BAI_PROVIDER=openai`.                                |
+| `BAI_SHELL`         | Override detected shell context (`fish`, `bash`, `zsh`, `nu`, etc.).   |
+| `BAI_CLIPBOARD`     | Set to `0`/`off`/`false`/`no` to disable clipboard copy by default.     |
+| `BAI_PROMPT_FILE`   | Override the prompt addendum path (default: `~/.config/bai/prompt.md`). |
+
+Provider defaults:
+
+| Provider | Default API type    | Default base URL             | Default model                  |
+| -------- | ------------------- | ---------------------------- | ------------------------------ |
+| `anthropic` | `anthropic`      | `https://api.anthropic.com`  | `claude-haiku-4-5-20251001`    |
+| `openai`    | `openai_responses` | `https://api.openai.com`   | `gpt-5-mini`                   |
+| `local`     | `openai_chat`    | `http://localhost:11434`     | Requires `BAI_MODEL`           |
 
 Environment variables override matching files in `~/.config/bai/`
 (or `$XDG_CONFIG_HOME/bai/`, or `$BAI_CONFIG_DIR/` if you set that).
@@ -157,10 +171,12 @@ For example:
 
 ```text
 ~/.config/bai/provider
+~/.config/bai/api_type
+~/.config/bai/base_url
+~/.config/bai/api_key
+~/.config/bai/model
 ~/.config/bai/anthropic_api_key
 ~/.config/bai/openai_api_key
-~/.config/bai/anthropic_model
-~/.config/bai/openai_model
 ~/.config/bai/shell
 ~/.config/bai/clipboard
 ~/.config/bai/prompt_file
@@ -174,6 +190,28 @@ prefix when present. So `BAI_PROVIDER` becomes `provider`, and
 `prompt.md` is the one special case: it is the actual prompt-addendum content
 file, not a string setting. By contrast, `prompt_file` contains a path if you
 want the addendum to live somewhere else.
+
+Older provider-specific model/base settings such as `BAI_ANTHROPIC_MODEL`,
+`BAI_OPENAI_MODEL`, `anthropic_model`, and `openai_model` are rejected with a
+clear error. Use the generic `BAI_MODEL` / `model` and `BAI_BASE_URL` /
+`base_url` settings instead.
+
+### Local LLMs
+
+`BAI_PROVIDER=local` uses an OpenAI-compatible Chat Completions endpoint. This
+works with local servers that expose `/v1/chat/completions`, including Ollama's
+OpenAI-compatible API.
+
+```sh
+export BAI_PROVIDER=local
+export BAI_BASE_URL=http://localhost:11434/v1
+export BAI_MODEL=qwen2.5-coder:7b
+
+bai list files changed today
+```
+
+If your local server requires a bearer token, set `BAI_API_KEY`. Otherwise
+`bai` sends a harmless placeholder key.
 
 ## Shell integration (Alt-Enter)
 

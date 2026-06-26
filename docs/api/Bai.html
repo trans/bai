@@ -4,8 +4,8 @@
   <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Crystal Docs 1.20.1">
-<meta name="crystal_docs.project_version" content="0.4.1">
+<meta name="generator" content="Crystal Docs 1.20.2">
+<meta name="crystal_docs.project_version" content="0.4.3">
 <meta name="crystal_docs.project_name" content="bai">
 
 
@@ -14,7 +14,7 @@
 <script type="text/javascript" src="js/doc.js"></script>
 
   <meta name="repository-name" content="bai">
-  <title>Bai - bai 0.4.1</title>
+  <title>Bai - bai 0.4.3</title>
   <script type="text/javascript">
     CrystalDocs.base_path = "";
   </script>
@@ -45,7 +45,7 @@
       </h1>
 
       <span class="project-version">
-        0.4.1
+        0.4.3
       </span>
     </div>
   </div>
@@ -56,27 +56,27 @@
 
   <div class="types-list">
     <ul>
-  
+
   <li class="parent open current" data-id="bai/Bai" data-name="bai">
       <a href="Bai.html">Bai</a>
-      
+
         <ul>
-  
+
   <li class=" " data-id="bai/Bai/GenerationResult" data-name="bai::generationresult">
       <a href="Bai/GenerationResult.html">GenerationResult</a>
-      
+
     </li>
-  
+
   <li class=" " data-id="bai/Bai/RequestOptions" data-name="bai::requestoptions">
       <a href="Bai/RequestOptions.html">RequestOptions</a>
-      
+
     </li>
-  
+
 </ul>
 
-      
+
     </li>
-  
+
 </ul>
 
   </div>
@@ -130,26 +130,31 @@
 </a>
     Defined in:
   </h2>
-  
-    
+
+
       bai.cr
-    
+
     <br/>
-  
-    
-      bai/anthropic_client.cr
-    
+
+
+      bai/api_config.cr
+
     <br/>
-  
-    
+
+
+      bai/clipboard.cr
+
+    <br/>
+
+
       bai/types.cr
-    
+
     <br/>
-  
 
 
 
-  
+
+
     <h2>
       <a id="constant-summary" class="anchor" href="#constant-summary">
   <svg class="octicon-link" aria-hidden="true">
@@ -158,25 +163,25 @@
 </a>
       Constant Summary
     </h2>
-  
+
   <dl>
-    
+
       <dt class="entry-const" id="VERSION">
-        <strong>VERSION</strong> = <code><span class="s">&quot;0.4.1&quot;</span></code>
+        <strong>VERSION</strong> = <code><span class="s">&quot;0.4.3&quot;</span></code>
       </dt>
-      
+
       <dd class="entry-const-doc">
         <p>The current released version of the CLI.</p>
       </dd>
-      
-    
+
+
   </dl>
 
 
 
-  
 
-  
+
+
   <h2>
     <a id="class-method-summary" class="anchor" href="#class-method-summary">
   <svg class="octicon-link" aria-hidden="true">
@@ -186,29 +191,29 @@
     Class Method Summary
   </h2>
   <ul class="list-summary">
-    
+
       <li class="entry-summary">
         <a href="#run%28argv%3AArray%28String%29%2Cstdin%3AIO%3DSTDIN%2Cstdout%3AIO%3DSTDOUT%2Cstderr%3AIO%3DSTDERR%2Cstdin_tty%3ABool%3DSTDIN.tty%3F%2Ccommand_requester%3AProc%28String%2CRequestOptions%2CGenerationResult%29%7CNil%3Dnil%2Cclipboard_copier%3AProc%28String%2CBool%29%7CNil%3Dnil%29%3AInt32-class-method" class="signature"><strong>.run</strong>(argv : Array(String), stdin : IO = <span class="t">STDIN</span>, stdout : IO = <span class="t">STDOUT</span>, stderr : IO = <span class="t">STDERR</span>, stdin_tty : Bool = <span class="t">STDIN</span>.tty?, command_requester : Proc(String, RequestOptions, GenerationResult) | Nil = <span class="n">nil</span>, clipboard_copier : Proc(String, Bool) | Nil = <span class="n">nil</span>) : Int32</a>
-        
+
           <div class="summary"><p>Parses CLI arguments and prints either help text, a dry-run prompt preview, or the proposed shell command.</p></div>
-        
+
       </li>
-    
+
   </ul>
 
 
-  
 
-  
+
+
 
 
   <div class="methods-inherited">
-    
+
   </div>
 
-  
 
-  
+
+
   <h2>
     <a id="class-method-detail" class="anchor" href="#class-method-detail">
   <svg class="octicon-link" aria-hidden="true">
@@ -217,35 +222,35 @@
 </a>
     Class Method Detail
   </h2>
-  
+
     <div class="entry-detail" id="run(argv:Array(String),stdin:IO=STDIN,stdout:IO=STDOUT,stderr:IO=STDERR,stdin_tty:Bool=STDIN.tty?,command_requester:Proc(String,RequestOptions,GenerationResult)|Nil=nil,clipboard_copier:Proc(String,Bool)|Nil=nil):Int32-class-method">
       <div class="signature">
-        
+
         def self.<strong>run</strong>(argv : Array(String), stdin : IO = <span class="t">STDIN</span>, stdout : IO = <span class="t">STDOUT</span>, stderr : IO = <span class="t">STDERR</span>, stdin_tty : Bool = <span class="t">STDIN</span>.tty?, command_requester : Proc(String, <a href="Bai/RequestOptions.html">RequestOptions</a>, <a href="Bai/GenerationResult.html">GenerationResult</a>) | Nil = <span class="n">nil</span>, clipboard_copier : Proc(String, Bool) | Nil = <span class="n">nil</span>) : Int32
 
         <a class="method-permalink" href="#run%28argv%3AArray%28String%29%2Cstdin%3AIO%3DSTDIN%2Cstdout%3AIO%3DSTDOUT%2Cstderr%3AIO%3DSTDERR%2Cstdin_tty%3ABool%3DSTDIN.tty%3F%2Ccommand_requester%3AProc%28String%2CRequestOptions%2CGenerationResult%29%7CNil%3Dnil%2Cclipboard_copier%3AProc%28String%2CBool%29%7CNil%3Dnil%29%3AInt32-class-method">#</a>
       </div>
-      
+
         <div class="doc">
-          
+
           <p>Parses CLI arguments and prints either help text, a dry-run prompt preview,
 or the proposed shell command.</p>
 <p>The query is read from <code>argv</code> first and falls back to stdin when piped input
 is available. Returns <code>0</code> on success, <code>1</code> on runtime or API failures, and
 <code>2</code> when no query was provided.</p>
         </div>
-      
+
       <br/>
       <div>
-        
+
       </div>
     </div>
-  
 
 
-  
 
-  
+
+
+
 
 
 </div>

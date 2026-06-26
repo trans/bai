@@ -4,8 +4,8 @@
   <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Crystal Docs 1.20.1">
-<meta name="crystal_docs.project_version" content="0.4.1">
+<meta name="generator" content="Crystal Docs 1.20.2">
+<meta name="crystal_docs.project_version" content="0.4.3">
 <meta name="crystal_docs.project_name" content="bai">
 
 
@@ -14,7 +14,7 @@
 <script type="text/javascript" src="js/doc.js"></script>
 
   <meta name="repository-name" content="bai">
-  <title>bai 0.4.1</title>
+  <title>bai 0.4.3</title>
   <script type="text/javascript">
   CrystalDocs.base_path = "";
   </script>
@@ -45,7 +45,7 @@
       </h1>
 
       <span class="project-version">
-        0.4.1
+        0.4.3
       </span>
     </div>
   </div>
@@ -56,27 +56,27 @@
 
   <div class="types-list">
     <ul>
-  
+
   <li class="parent " data-id="bai/Bai" data-name="bai">
       <a href="Bai.html">Bai</a>
-      
+
         <ul>
-  
+
   <li class=" " data-id="bai/Bai/GenerationResult" data-name="bai::generationresult">
       <a href="Bai/GenerationResult.html">GenerationResult</a>
-      
+
     </li>
-  
+
   <li class=" " data-id="bai/Bai/RequestOptions" data-name="bai::requestoptions">
       <a href="Bai/RequestOptions.html">RequestOptions</a>
-      
+
     </li>
-  
+
 </ul>
 
-      
+
     </li>
-  
+
 </ul>
 
   </div>
@@ -120,21 +120,49 @@ your prompt buffer in place.</p>
 <pre><code class="language-sh">sudo dpkg -i ./bai_*.deb</code></pre>
 <p>If <code>dpkg</code> reports missing dependencies, finish with:</p>
 <pre><code class="language-sh">sudo apt-get install -f</code></pre>
+<h3><a id="fedora-rpm" class="anchor" href="#fedora-rpm">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Fedora / RPM</h3>
+<p>Download the <code>.rpm</code> asset from the latest GitHub release, then install:</p>
+<pre><code class="language-sh">sudo dnf install ./bai-*.rpm</code></pre>
+<p>On openSUSE, local unsigned RPMs need an explicit allowance:</p>
+<pre><code class="language-sh">sudo zypper install --allow-unsigned-rpm ./bai-*.rpm</code></pre>
+<h3><a id="mac-os" class="anchor" href="#mac-os">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>macOS</h3>
+<p>Install from the tap:</p>
+<pre><code class="language-sh">brew tap trans/tap
+brew install bai</code></pre>
+<p>Or build from source with Homebrew-provided Crystal and <code>just</code>:</p>
+<pre><code class="language-sh">brew install crystal just
+git clone https://github.com/trans/bai
+cd bai
+just install</code></pre>
+<p>Clipboard copy uses the built-in <code>pbcopy</code> command on macOS.</p>
 <h3><a id="from-source" class="anchor" href="#from-source">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
   </svg>
-</a>From source</h3>
+</a>From Source</h3>
 <p>Requires <a href="https://crystal-lang.org/">Crystal</a> and <a href="https://just.systems/">just</a>.</p>
 <pre><code class="language-sh">git clone https://github.com/trans/bai
 cd bai
 just install                 # → /usr/local/bin/bai
 PREFIX=~/.local just install # → ~/.local/bin/bai</code></pre>
-<p>Then either export your Anthropic API key:</p>
+<p>Then either export an API key:</p>
 <pre><code class="language-sh">export ANTHROPIC_API_KEY=sk-ant-...</code></pre>
 <p>Or drop it into your config directory:</p>
 <pre><code class="language-sh">mkdir -p ~/.config/bai
 printf '%s\n' 'sk-ant-...' &gt; ~/.config/bai/anthropic_api_key</code></pre>
+<p>For OpenAI-compatible local servers such as Ollama, set the provider, base URL,
+and model explicitly:</p>
+<pre><code class="language-sh">export BAI_PROVIDER=local
+export BAI_BASE_URL=http://localhost:11434/v1
+export BAI_MODEL=qwen2.5-coder:7b</code></pre>
 <h2><a id="usage" class="anchor" href="#usage">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
@@ -170,25 +198,34 @@ content is ready to paste cleanly) and exits.</p>
     <use href="#octicon-link"/>
   </svg>
 </a>Environment variables</h3>
-<p>| Variable             | Purpose                                                                |
-| -------------------- | ---------------------------------------------------------------------- |
-| <code>BAI_PROVIDER</code>       | Select provider: <code>anthropic</code> or <code>openai</code> (default: <code>anthropic</code>).       |
-| <code>ANTHROPIC_API_KEY</code>  | Required when <code>BAI_PROVIDER=anthropic</code>.                                |
-| <code>OPENAI_API_KEY</code>     | Required when <code>BAI_PROVIDER=openai</code>.                                   |
-| <code>BAI_ANTHROPIC_MODEL</code>| Preferred Anthropic model override (<code>claude-haiku-4-5-20251001</code>).      |
-| <code>BAI_MODEL</code>          | Legacy alias for <code>BAI_ANTHROPIC_MODEL</code>.                                |
-| <code>BAI_OPENAI_MODEL</code>   | OpenAI model override (default: <code>gpt-5-mini</code>).                         |
-| <code>BAI_SHELL</code>          | Override detected shell context (<code>fish</code>, <code>bash</code>, <code>zsh</code>, <code>nu</code>, etc.).  |
-| <code>BAI_CLIPBOARD</code>      | Set to <code>0</code>/<code>off</code>/<code>false</code>/<code>no</code> to disable clipboard copy by default.    |
-| <code>BAI_PROMPT_FILE</code>    | Override the prompt addendum path (default: <code>~/.config/bai/prompt.md</code>).|</p>
+<p>| Variable            | Purpose                                                                 |
+| ------------------- | ----------------------------------------------------------------------- |
+| <code>BAI_PROVIDER</code>      | Select provider defaults: <code>anthropic</code>, <code>openai</code>, or <code>local</code>.            |
+| <code>BAI_API_TYPE</code>      | Wire API override: <code>anthropic</code>, <code>openai_responses</code>, or <code>openai_chat</code>.   |
+| <code>BAI_BASE_URL</code>      | API base URL; provider defaults are used when unset.                    |
+| <code>BAI_API_KEY</code>       | API key override for the selected provider.                             |
+| <code>BAI_MODEL</code>         | Model name for the selected provider/API.                               |
+| <code>ANTHROPIC_API_KEY</code> | Fallback key when <code>BAI_PROVIDER=anthropic</code>.                             |
+| <code>OPENAI_API_KEY</code>    | Fallback key when <code>BAI_PROVIDER=openai</code>.                                |
+| <code>BAI_SHELL</code>         | Override detected shell context (<code>fish</code>, <code>bash</code>, <code>zsh</code>, <code>nu</code>, etc.).   |
+| <code>BAI_CLIPBOARD</code>     | Set to <code>0</code>/<code>off</code>/<code>false</code>/<code>no</code> to disable clipboard copy by default.     |
+| <code>BAI_PROMPT_FILE</code>   | Override the prompt addendum path (default: <code>~/.config/bai/prompt.md</code>). |</p>
+<p>Provider defaults:</p>
+<p>| Provider | Default API type    | Default base URL             | Default model                  |
+| -------- | ------------------- | ---------------------------- | ------------------------------ |
+| <code>anthropic</code> | <code>anthropic</code>      | <code>https://api.anthropic.com</code>  | <code>claude-haiku-4-5-20251001</code>    |
+| <code>openai</code>    | <code>openai_responses</code> | <code>https://api.openai.com</code>   | <code>gpt-5-mini</code>                   |
+| <code>local</code>     | <code>openai_chat</code>    | <code>http://localhost:11434</code>     | Requires <code>BAI_MODEL</code>           |</p>
 <p>Environment variables override matching files in <code>~/.config/bai/</code>
 (or <code>$XDG_CONFIG_HOME/bai/</code>, or <code>$BAI_CONFIG_DIR/</code> if you set that).
 For example:</p>
 <pre><code class="language-text">~/.config/bai/provider
+~/.config/bai/api_type
+~/.config/bai/base_url
+~/.config/bai/api_key
+~/.config/bai/model
 ~/.config/bai/anthropic_api_key
 ~/.config/bai/openai_api_key
-~/.config/bai/anthropic_model
-~/.config/bai/openai_model
 ~/.config/bai/shell
 ~/.config/bai/clipboard
 ~/.config/bai/prompt_file
@@ -199,6 +236,25 @@ prefix when present. So <code>BAI_PROVIDER</code> becomes <code>provider</code>,
 <p><code>prompt.md</code> is the one special case: it is the actual prompt-addendum content
 file, not a string setting. By contrast, <code>prompt_file</code> contains a path if you
 want the addendum to live somewhere else.</p>
+<p>Older provider-specific model/base settings such as <code>BAI_ANTHROPIC_MODEL</code>,
+<code>BAI_OPENAI_MODEL</code>, <code>anthropic_model</code>, and <code>openai_model</code> are rejected with a
+clear error. Use the generic <code>BAI_MODEL</code> / <code>model</code> and <code>BAI_BASE_URL</code> /
+<code>base_url</code> settings instead.</p>
+<h3><a id="local-ll-ms" class="anchor" href="#local-ll-ms">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Local LLMs</h3>
+<p><code>BAI_PROVIDER=local</code> uses an OpenAI-compatible Chat Completions endpoint. This
+works with local servers that expose <code>/v1/chat/completions</code>, including Ollama's
+OpenAI-compatible API.</p>
+<pre><code class="language-sh">export BAI_PROVIDER=local
+export BAI_BASE_URL=http://localhost:11434/v1
+export BAI_MODEL=qwen2.5-coder:7b
+
+bai list files changed today</code></pre>
+<p>If your local server requires a bearer token, set <code>BAI_API_KEY</code>. Otherwise
+<code>bai</code> sends a harmless placeholder key.</p>
 <h2><a id="shell-integration-alt-enter" class="anchor" href="#shell-integration-alt-enter">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
@@ -267,6 +323,15 @@ Content is sent verbatim — what you write is what the model sees.</p>
 <span class="t">Avoid</span> sudo <span class="k">unless</span> the request clearly requires it.</code></pre>
 <p><code>bai --dry-run</code> will show your addendum in the rendered system prompt so
 you can verify it's loading.</p>
+<h2><a id="packaging" class="anchor" href="#packaging">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Packaging</h2>
+<p>Local package build helpers:</p>
+<pre><code class="language-sh">just pkg-arch
+just pkg-deb
+just pkg-rpm</code></pre>
 <h2><a id="strict-and-explain-modes" class="anchor" href="#strict-and-explain-modes">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
@@ -310,6 +375,8 @@ just docs-api    # generate HTML API docs at docs/api
 just pkg-src     # snapshot tracked files into pkg/bai-&lt;version&gt;.tar.gz
 just pkg-arch    # build an Arch package in pkg/
 just pkg-deb     # build Debian package artifacts in pkg/
+just pkg-rpm     # build Fedora/RPM package artifacts in pkg/
+just sync-homebrew-tap # copy pkg/homebrew/bai.rb into ../homebrew-tap
 just release-check # run spec + package checks before tagging a release
 just run -- &lt;query&gt;
 just test

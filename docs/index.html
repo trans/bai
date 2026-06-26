@@ -668,7 +668,7 @@
             </div>
             <div class="meta-card">
               <strong>Providers</strong>
-              <span>Anthropic or OpenAI</span>
+              <span>Anthropic, OpenAI, or local</span>
             </div>
           </div>
         </div>
@@ -742,7 +742,7 @@
         <p>
           Pull a release package if you just want the binary. Build from source if
           you want to hack on it, read the Crystal code, or generate the API docs.
-          BYOK for Anthropic or OpenAI.
+          BYOK for Anthropic or OpenAI, or point it at a local OpenAI-compatible model.
           <a href="https://github.com/trans/bai/releases/latest">Releases are available on GitHub.</a>
         </p>
 
@@ -794,6 +794,9 @@ bai show the largest 10 files under home</code></pre>
           <article class="panel">
             <h3>Config lives here</h3>
             <pre class="snippet"><code>~/.config/bai/provider
+~/.config/bai/api_type
+~/.config/bai/base_url
+~/.config/bai/model
 ~/.config/bai/anthropic_api_key
 ~/.config/bai/openai_api_key
 ~/.config/bai/shell

@@ -1,7 +1,7 @@
 require "./spec_helper"
 
 module BaiSpecSupport
-  def self.with_env(key : String, value : String?)
+  def self.with_env(key : String, value : String?, &)
     original = ENV[key]?
 
     if value.nil?
@@ -19,7 +19,7 @@ module BaiSpecSupport
     end
   end
 
-  def self.with_config(files : Hash(String, String))
+  def self.with_config(files : Hash(String, String), &)
     path = "/tmp/bai-spec-config-#{Process.pid}-#{Random.rand(1_000_000)}"
     Dir.mkdir_p(path)
 
@@ -65,24 +65,30 @@ describe Bai do
 
   it "prints effective config without requiring a query" do
     BaiSpecSupport.with_env("BAI_PROVIDER", nil) do
-      BaiSpecSupport.with_env("ANTHROPIC_API_KEY", nil) do
-        BaiSpecSupport.with_env("OPENAI_API_KEY", nil) do
-          BaiSpecSupport.with_config({
-            "provider"           => "openai",
-            "openai_api_key"     => "sk-openai-test-1234",
-            "anthropic_api_key"  => "sk-ant-test-5678",
-            "shell"              => "zsh",
-          }) do
-            stdout = IO::Memory.new
-            stderr = IO::Memory.new
+      BaiSpecSupport.with_env("BAI_MODEL", nil) do
+        BaiSpecSupport.with_env("BAI_API_KEY", nil) do
+          BaiSpecSupport.with_env("ANTHROPIC_API_KEY", nil) do
+            BaiSpecSupport.with_env("OPENAI_API_KEY", nil) do
+              BaiSpecSupport.with_config({
+                "provider" => "openai",
+                "api_key"  => "sk-openai-test-1234",
+                "model"    => "gpt-test",
+                "shell"    => "zsh",
+              }) do
+                stdout = IO::Memory.new
+                stderr = IO::Memory.new
 
-            Bai.run(["--show-config"], stdout: stdout, stderr: stderr).should eq(0)
+                Bai.run(["--show-config"], stdout: stdout, stderr: stderr).should eq(0)
 
-            stdout.to_s.should contain("provider: openai")
-            stdout.to_s.should contain("shell: zsh")
-            stdout.to_s.should contain("anthropic_api_key: sk-a...5678")
-            stdout.to_s.should contain("openai_api_key: sk-o...1234")
-            stderr.to_s.should eq("")
+                stdout.to_s.should contain("provider: openai")
+                stdout.to_s.should contain("api_type: openai_responses")
+                stdout.to_s.should contain("base_url: https://api.openai.com")
+                stdout.to_s.should contain("model: gpt-test")
+                stdout.to_s.should contain("api_key: sk-o...1234")
+                stdout.to_s.should contain("shell: zsh")
+                stderr.to_s.should eq("")
+              end
+            end
           end
         end
       end
@@ -111,27 +117,35 @@ describe Bai do
   end
 
   it "returns 1 when the API key is missing" do
-    BaiSpecSupport.with_env("ANTHROPIC_API_KEY", nil) do
-      stdout = IO::Memory.new
-      stderr = IO::Memory.new
+    BaiSpecSupport.with_env("BAI_API_KEY", nil) do
+      BaiSpecSupport.with_env("ANTHROPIC_API_KEY", nil) do
+        BaiSpecSupport.with_config({} of String => String) do
+          stdout = IO::Memory.new
+          stderr = IO::Memory.new
 
-      Bai.run(["list", "files"], stdout: stdout, stderr: stderr).should eq(1)
+          Bai.run(["list", "files"], stdout: stdout, stderr: stderr).should eq(1)
 
-      stdout.to_s.should eq("")
-      stderr.to_s.should eq("bai: ANTHROPIC_API_KEY not set\n")
+          stdout.to_s.should eq("")
+          stderr.to_s.should eq("bai: BAI_API_KEY or ANTHROPIC_API_KEY not set\n")
+        end
+      end
     end
   end
 
   it "returns 1 when the OpenAI API key is missing for the openai provider" do
     BaiSpecSupport.with_env("BAI_PROVIDER", "openai") do
-      BaiSpecSupport.with_env("OPENAI_API_KEY", nil) do
-        stdout = IO::Memory.new
-        stderr = IO::Memory.new
+      BaiSpecSupport.with_env("BAI_API_KEY", nil) do
+        BaiSpecSupport.with_env("OPENAI_API_KEY", nil) do
+          BaiSpecSupport.with_config({} of String => String) do
+            stdout = IO::Memory.new
+            stderr = IO::Memory.new
 
-        Bai.run(["list", "files"], stdout: stdout, stderr: stderr).should eq(1)
+            Bai.run(["list", "files"], stdout: stdout, stderr: stderr).should eq(1)
 
-        stdout.to_s.should eq("")
-        stderr.to_s.should eq("bai: OPENAI_API_KEY not set\n")
+            stdout.to_s.should eq("")
+            stderr.to_s.should eq("bai: BAI_API_KEY or OPENAI_API_KEY not set\n")
+          end
+        end
       end
     end
   end
@@ -142,6 +156,28 @@ describe Bai do
         Bai::Provider.current.should eq("openai")
       end
     end
+  end
+
+  it "resolves local provider defaults for OpenAI-compatible chat APIs" do
+    BaiSpecSupport.with_env("BAI_PROVIDER", nil) do
+      BaiSpecSupport.with_env("BAI_MODEL", nil) do
+        BaiSpecSupport.with_config({"provider" => "local", "model" => "qwen2.5-coder:7b"}) do
+          config = Bai::ApiConfig.resolve
+
+          config.provider.should eq("local")
+          config.api_type.should eq("openai_chat")
+          config.base_url.should eq("http://localhost:11434")
+          config.api_key.should eq("none")
+          config.model.should eq("qwen2.5-coder:7b")
+        end
+      end
+    end
+  end
+
+  it "allows OpenAI-compatible base URLs with or without /v1" do
+    config = Bai::ApiConfig.new("local", "openai_chat", "http://localhost:11434/v1", "none", "model")
+
+    config.endpoint("/v1/chat/completions").should eq("http://localhost:11434/v1/chat/completions")
   end
 
   it "uses a shell override in dry-run output" do
@@ -225,6 +261,31 @@ describe Bai do
 
       stdout.to_s.should eq("")
       stderr.to_s.should eq("bai: unsupported provider: bogus\n")
+    end
+  end
+
+  it "returns 1 when a deprecated provider-specific env var is used" do
+    BaiSpecSupport.with_env("BAI_ANTHROPIC_MODEL", "old-model") do
+      stdout = IO::Memory.new
+      stderr = IO::Memory.new
+
+      Bai.run(["--show-config"], stdout: stdout, stderr: stderr).should eq(1)
+
+      stdout.to_s.should eq("")
+      stderr.to_s.should eq("bai: BAI_ANTHROPIC_MODEL is no longer supported. Use BAI_MODEL instead.\n")
+    end
+  end
+
+  it "returns 1 when a deprecated provider-specific config file is used" do
+    BaiSpecSupport.with_config({"openai_model" => "old-model"}) do
+      stdout = IO::Memory.new
+      stderr = IO::Memory.new
+
+      Bai.run(["--show-config"], stdout: stdout, stderr: stderr).should eq(1)
+
+      stdout.to_s.should eq("")
+      stderr.to_s.should contain("openai_model is no longer supported")
+      stderr.to_s.should contain("model instead")
     end
   end
 
@@ -445,7 +506,7 @@ describe Bai::OpenAIClient do
   it "uses output_text when present" do
     response = {
       output_text: "ls -lt",
-      output: [] of String,
+      output:      [] of String,
     }.to_json
 
     Bai::OpenAIClient.extract_command(response).should eq("ls -lt")
@@ -512,6 +573,52 @@ describe Bai::OpenAIClient do
   it "raises a clear error when the response is invalid json" do
     expect_raises(Exception, "API response was not valid JSON") do
       Bai::OpenAIClient.extract_command("{not json")
+    end
+  end
+end
+
+describe Bai::OpenAIChatClient do
+  it "extracts the first usable chat message content" do
+    response = {
+      choices: [
+        {message: {role: "assistant", content: "ls -lt"}},
+      ],
+    }.to_json
+
+    Bai::OpenAIChatClient.extract_command(response).should eq("ls -lt")
+  end
+
+  it "sanitizes fenced chat message content" do
+    response = {
+      choices: [
+        {message: {role: "assistant", content: "```sh\nfd -t f\n```"}},
+      ],
+    }.to_json
+
+    Bai::OpenAIChatClient.extract_command(response).should eq("fd -t f")
+  end
+
+  it "raises a clear error when choices are missing" do
+    expect_raises(Exception, "API response missing choices array") do
+      Bai::OpenAIChatClient.extract_command({id: "chatcmpl_123"}.to_json)
+    end
+  end
+
+  it "raises a clear error when no usable message content is present" do
+    response = {
+      choices: [
+        {message: {role: "assistant", content: "   "}},
+      ],
+    }.to_json
+
+    expect_raises(Exception, "API response contained no usable message content") do
+      Bai::OpenAIChatClient.extract_command(response)
+    end
+  end
+
+  it "raises a clear error when the response is invalid json" do
+    expect_raises(Exception, "API response was not valid JSON") do
+      Bai::OpenAIChatClient.extract_command("{not json")
     end
   end
 end
