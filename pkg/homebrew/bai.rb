@@ -1,8 +1,9 @@
 class Bai < Formula
   desc "AI shell-command helper"
   homepage "https://github.com/trans/bai"
-  url "https://github.com/trans/bai/archive/refs/tags/v0.4.3.tar.gz"
-  sha256 "f05d82f1bdbf8de3e084a43835cffc3808d2998c1c479ae40c5243e26e18fea1"
+  url "https://github.com/trans/bai.git",
+      tag: "v0.4.4"
+  version "0.4.4"
   license "MIT"
 
   depends_on "crystal" => :build

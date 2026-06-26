@@ -1,3 +1,13 @@
+bai (0.4.4-1) unstable; urgency=medium
+
+  * Add local OpenAI-compatible chat provider support.
+  * Generalize provider configuration with BAI_API_TYPE, BAI_BASE_URL,
+    BAI_API_KEY, and BAI_MODEL.
+  * Reject deprecated provider-specific model/base settings with migration
+    errors.
+
+ -- trans <transfire@gmail.com>  Fri, 26 Jun 2026 00:00:00 +0000
+
 bai (0.4.3-1) unstable; urgency=medium
 
   * Loosen RPM runtime dependencies for openSUSE compatibility.

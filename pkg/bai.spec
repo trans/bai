@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 
 Name:           bai
-Version:        0.4.3
+Version:        0.4.4
 Release:        1%{?dist}
 Summary:        Translate natural-language shell requests into proposed commands
 
@@ -42,6 +42,11 @@ install -Dpm0644 LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE
 %{_bindir}/bai
 
 %changelog
+* Fri Jun 26 2026 Thomas Sawyer <transfire@gmail.com> - 0.4.4-1
+- Add local OpenAI-compatible chat provider support
+- Generalize provider configuration with BAI_API_TYPE, BAI_BASE_URL, BAI_API_KEY, and BAI_MODEL
+- Reject deprecated provider-specific model/base settings with migration errors
+
 * Thu May 28 2026 Thomas Sawyer <transfire@gmail.com> - 0.4.3-1
 - Loosen RPM runtime dependencies for openSUSE compatibility
 - Reduce landing page rendering cost

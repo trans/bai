@@ -68,8 +68,8 @@ clean:
     rm -rf bin lib .crystal docs/api pkg/build pkg/pkg pkg/src pkg/rpmbuild pkg/*.tar.gz pkg/*.deb pkg/*.buildinfo pkg/*.changes pkg/*.dsc pkg/*.build pkg/*.rpm pkg/*.src.rpm
 
 fmt:
-    crystal tool format
+    crystal tool format src spec
 
 check:
-    crystal tool format --check
+    crystal tool format --check src spec
     crystal spec

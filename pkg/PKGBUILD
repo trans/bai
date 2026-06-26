@@ -1,6 +1,6 @@
 # Maintainer: trans <transfire@gmail.com>
 pkgname=bai
-pkgver=0.4.3
+pkgver=0.4.4
 pkgrel=1
 pkgdesc="Translate natural-language shell requests into proposed commands"
 arch=('x86_64')

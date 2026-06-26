@@ -16,7 +16,7 @@ require "./bai/types"
 # `Bai` exposes the CLI entry logic for the executable and for tests.
 module Bai
   # The current released version of the CLI.
-  VERSION = "0.4.3"
+  VERSION = "0.4.4"
 
   # :nodoc:
   API_VER = "2023-06-01"
